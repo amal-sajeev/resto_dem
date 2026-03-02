@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kitchen Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #111210;
+    --rail:      #1a1c18;
+    --rail-b:    #252720;
+    --bar:       #0e0f0c;
+    --card-bg:   #fafaf8;
+    --card-b:    #e8e8e2;
+    --txt-dark:  #1a1c18;
+    --txt-mid:   #555550;
+    --txt-light: #999990;
+
+    --s-new:      #d42b2b;
+    --s-new-lt:   #ff4444;
+    --s-prep:     #d47a00;
+    --s-prep-lt:  #f5a623;
+    --s-ready:    #1a8c3a;
+    --s-ready-lt: #22c45a;
+    --s-served:   #555550;
+
+    --bump:    #22c45a;
+    --cooking: #f5a623;
+    --recall:  #d42b2b;
+    --info:    #3a8fd4;
+
+    --bar-h:    72px;
+    --rail-w:   210px;
+    --header-h: 52px;
+    --ring-r:   13;
+    --ring-c:   81.68; /* 2*PI*13 */
+    --scale:    1.5;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--card-bg);
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  body {
+    width: 66.666vw;
+    height: 66.666vh;
+    transform: scale(var(--scale));
+    transform-origin: 0 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ═══════════════════════════════════════
+     PICKER
+  ═══════════════════════════════════════ */
+  #pickerScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 40px;
+  }
+  .picker-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .picker-title span { color: var(--bump); }
+  .picker-sub {
+    font-size: 14px;
+    color: var(--txt-light);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: -28px;
+  }
+  .picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    max-width: 880px;
+    padding: 0 24px;
+  }
+  .picker-card {
+    background: var(--rail);
+    border: 2px solid var(--rail-b);
+    border-radius: 6px;
+    padding: 28px 40px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    min-width: 180px;
+  }
+  .picker-card:hover {
+    border-color: var(--bump);
+    background: #1f2218;
+    transform: translateY(-4px);
+  }
+  .picker-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .picker-card-hours {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--txt-light);
+  }
+  .picker-card.inactive {
+    opacity: 0.6;
+    border-color: var(--txt-mid);
+  }
+  .picker-card.inactive .picker-card-hours {
+    color: var(--s-prep);
+  }
+  .picker-card.inactive::after {
+    content: 'Currently closed';
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--s-prep);
+    margin-top: 6px;
+  }
+  .picker-loading {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--txt-light);
+  }
+
+  /* ═══════════════════════════════════════
+     KDS
+  ═══════════════════════════════════════ */
+  #kdsScreen {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .kds-header {
+    height: var(--header-h);
+    background: var(--rail);
+    border-bottom: 2px solid var(--rail-b);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    flex-shrink: 0;
+    gap: 12px;
+    transition: background 0.3s;
+  }
+  .kds-header-left { display: flex; align-items: center; gap: 12px; }
+  .kds-back {
+    background: none;
+    border: 1.5px solid var(--rail-b);
+    border-radius: 4px;
+    color: var(--txt-light);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .kds-back:hover { border-color: var(--txt-mid); color: var(--card-bg); }
+  .kds-resto-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .kds-header-center { display: flex; align-items: center; gap: 14px; }
+  .hdr-stat {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1.5px solid;
+  }
+  .hdr-stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .hdr-stat-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .hdr-stat-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hdr-stat.new   { border-color: rgba(212,43,43,0.4); }
+  .hdr-stat.new   .hdr-stat-dot { background: var(--s-new); box-shadow: 0 0 6px var(--s-new); }
+  .hdr-stat.new   .hdr-stat-val { color: var(--s-new-lt); }
+  .hdr-stat.prep  { border-color: rgba(212,122,0,0.4); }
+  .hdr-stat.prep  .hdr-stat-dot { background: var(--s-prep); box-shadow: 0 0 6px var(--s-prep); }
+  .hdr-stat.prep  .hdr-stat-val { color: var(--s-prep-lt); }
+  .hdr-stat.ready { border-color: rgba(26,140,58,0.4); }
+  .hdr-stat.ready .hdr-stat-dot { background: var(--s-ready); box-shadow: 0 0 6px var(--s-ready); }
+  .hdr-stat.ready .hdr-stat-val { color: var(--s-ready-lt); }
+
+  .kds-header-right { display: flex; align-items: center; gap: 12px; }
+  .kds-clock {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    min-width: 80px;
+    text-align: right;
+  }
+  .kds-refresh-ring { width: 32px; height: 32px; }
+  .kds-refresh-ring svg { transform: rotate(-90deg); }
+  .ring-bg  { fill: none; stroke: var(--rail-b); stroke-width: 3; }
+  .ring-fg  { fill: none; stroke: var(--bump);   stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+
+  /* ── Body ── */
+  .kds-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+  /* ── Left rail ── */
+  .kds-rail {
+    width: var(--rail-w);
+    background: var(--rail);
+    border-right: 2px solid var(--rail-b);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .rail-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--txt-light);
+    padding: 11px 14px 9px;
+    border-bottom: 1px solid var(--rail-b);
+  }
+  .rail-scroll {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rail-b) transparent;
+  }
+  .rail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    border-bottom: 1px solid rgba(37,39,32,0.5);
+    transition: background 0.12s;
+  }
+  .rail-item:hover { background: var(--rail-b); }
+  .rail-item-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--card-bg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 130px;
+  }
+  .rail-item-qty {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--s-prep-lt);
+    background: rgba(212,122,0,0.12);
+    border-radius: 3px;
+    padding: 1px 6px;
+    min-width: 26px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .rail-item-qty.high { color: var(--s-new-lt); background: rgba(212,43,43,0.15); }
+  .rail-empty {
+    padding: 20px 14px;
+    font-size: 12px;
+    color: var(--txt-light);
+    text-align: center;
+  }
+
+  /* ── Grid wrap ── */
+  .kds-grid-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rail-b) transparent;
+  }
+  .kds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 9px;
+    align-content: start;
+  }
+  .kds-grid.has-selection .ticket:not(.selected) { opacity: 0.3; }
+
+  /* ── Ticket ── */
+  .ticket {
+    background: var(--card-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.12s, opacity 0.2s;
+    outline: 4px solid transparent;
+    outline-offset: 1px;
+    animation: ticketIn 0.32s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .ticket:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.55); transform: translateY(-1px); }
+
+  /* ── Selected ticket ── */
+  .ticket.selected {
+    outline: none;
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px var(--bump), 0 0 20px rgba(34,196,90,0.4), 0 0 40px rgba(34,196,90,0.15);
+    transform: scale(1.04);
+    background: #e6f9ed;
+    z-index: 2;
+  }
+  .ticket.selected:hover {
+    transform: scale(1.04) translateY(-1px);
+    box-shadow: 0 0 0 3px var(--bump), 0 0 24px rgba(34,196,90,0.5), 0 0 48px rgba(34,196,90,0.2);
+  }
+  /* Bright green top strip */
+  .ticket.selected::before {
+    content: '';
+    display: block;
+    height: 6px;
+    background: var(--bump);
+    flex-shrink: 0;
+  }
+  .ticket.selected .ticket-body { background: #e6f9ed; }
+  .ticket.selected .ti-qty { color: #0d6e30; font-weight: 700; }
+  .ticket.selected .ti-name { color: #0a1a0f; }
+  .ticket.selected .ticket-item { border-bottom-color: rgba(34,196,90,0.18); }
+  .ticket.selected .ticket-actions {
+    background: #d4f5de;
+    border-top: 2px solid var(--bump);
+  }
+  .ticket.selected .ticket-act-btn { color: #0d6e30; border-right-color: rgba(34,196,90,0.25); }
+  .ticket.selected .ticket-act-btn.primary,
+  .ticket.selected .ticket-act-btn.primary.prep-clr,
+  .ticket.selected .ticket-act-btn.primary.ready-clr {
+    background: var(--bump);
+    color: #fff;
+    font-size: 14px;
+  }
+  .ticket.selected .ticket-act-btn.dimmed { color: #5aad6e; }
+
+  @keyframes ticketIn {
+    from { opacity: 0; transform: scale(0.94) translateY(10px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+  }
+  .ticket.bump-out {
+    animation: ticketOut 0.35s ease-in forwards;
+  }
+  @keyframes ticketOut {
+    to { opacity: 0; transform: scale(0.88); }
+  }
+
+  /* Ticket header */
+  .ticket-hdr {
+    display: flex;
+    align-items: stretch;
+    height: 52px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .ticket[data-status="received"]  .ticket-hdr { background: var(--s-new); }
+  .ticket[data-status="preparing"] .ticket-hdr { background: var(--s-prep); }
+  .ticket[data-status="ready"]     .ticket-hdr { background: var(--s-ready); }
+  .ticket[data-status="served"]    .ticket-hdr { background: var(--s-served); opacity: 0.7; }
+
+  .ticket-hdr-time {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  .ticket-hdr-room {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 4px 10px;
+    border-left: 1.5px solid rgba(255,255,255,0.2);
+    min-width: 80px;
+  }
+
+  .ticket-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .ticket-elapsed {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1;
+    margin-top: 2px;
+  }
+  .ticket[data-age="warn"] .ticket-time { color: #ffe080; }
+  .ticket[data-age="urgent"] .ticket-time { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  .ticket-room-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    line-height: 1;
+  }
+  .ticket-room-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 19px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  .ticket-meta {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  /* Ticket body */
+  .ticket-body { flex: 1; padding: 4px 0 2px; }
+  .ticket-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .ticket-item:last-child { border-bottom: none; }
+  .ti-qty {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--txt-dark);
+    flex-shrink: 0;
+    min-width: 24px;
+  }
+  .ti-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--txt-dark);
+    line-height: 1.3;
+    flex: 1;
+  }
+  .ti-item-note {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--s-prep);
+    padding: 0 10px 4px 30px;
+    line-height: 1.35;
+    font-style: italic;
+  }
+
+  /* Notes */
+  .ticket-notes {
+    background: #fff5f5;
+    border-top: 2px solid rgba(212,43,43,0.2);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--s-new);
+    line-height: 1.45;
+  }
+  .ticket-notes-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* Actions */
+  .ticket-actions {
+    display: flex;
+    border-top: 1.5px solid var(--card-b);
+    flex-shrink: 0;
+  }
+  .ticket-act-btn {
+    flex: 1;
+    border: none;
+    padding: 10px 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: transparent;
+    color: var(--txt-mid);
+    border-right: 1px solid var(--card-b);
+    transition: background 0.1s, filter 0.1s;
+  }
+  .ticket-act-btn:last-child { border-right: none; }
+  .ticket-act-btn:hover { filter: brightness(1.12); }
+  .ticket-act-btn.primary              { background: var(--s-new);   color: #fff; }
+  .ticket-act-btn.primary.prep-clr     { background: var(--s-prep);  color: #fff; }
+  .ticket-act-btn.primary.ready-clr    { background: var(--s-ready); color: #fff; }
+  .ticket-act-btn.dimmed { color: var(--txt-light); font-size: 11px; }
+
+  /* ── Bottom bar ── */
+  .kds-bar {
+    height: var(--bar-h);
+    background: var(--bar);
+    border-top: 2px solid var(--rail-b);
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+    transition: background 0.3s;
+    padding: 0 16px;
+    overflow: visible;
+  }
+  .bar-btn {
+    flex: 1;
+    border: none;
+    border-right: 1px solid #1e1e18;
+    background: transparent;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background 0.12s, color 0.12s;
+  }
+  .bar-btn:last-child { border-right: none; }
+  .bar-btn .bar-icon { font-size: 17px; line-height: 1; }
+  .bar-btn:hover { background: rgba(255,255,255,0.05); color: #bbb; }
+  .bar-btn:active { background: rgba(255,255,255,0.02); }
+
+  .bar-btn.bump-btn   { color: var(--bump);   background: rgba(34,196,90,0.07); }
+  .bar-btn.bump-btn:hover { background: rgba(34,196,90,0.16); }
+  .bar-btn.cook-btn   { color: var(--cooking); background: rgba(245,166,35,0.05); }
+  .bar-btn.cook-btn:hover { background: rgba(245,166,35,0.13); }
+  .bar-btn.recall-btn { color: var(--recall);  background: rgba(212,43,43,0.05); }
+  .bar-btn.recall-btn:hover { background: rgba(212,43,43,0.13); }
+  .bar-btn.info-btn   { color: var(--info); }
+  .bar-btn.info-btn:hover { background: rgba(58,143,212,0.1); }
+
+  /* Bar button tooltips (large, on hover) */
+  .bar-btn {
+    position: relative;
+  }
+  .bar-btn-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    width: max(280px, 24vw);
+    max-width: min(380px, calc(100vw - 32px));
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 16px 18px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--card-bg);
+    background: var(--rail);
+    border: 2px solid var(--rail-b);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    white-space: normal;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  }
+  /* First button: anchor left so tooltip doesn't get clipped on the left */
+  .bar-btn:first-child .bar-btn-tooltip {
+    left: 0;
+    transform: translateY(-8px);
+  }
+  .bar-btn:first-child:hover .bar-btn-tooltip {
+    transform: translateY(-12px);
+  }
+  /* Last button: anchor right so tooltip doesn't get clipped on the right */
+  .bar-btn:last-child .bar-btn-tooltip {
+    left: auto;
+    right: 0;
+    transform: translateY(-8px);
+  }
+  .bar-btn:last-child:hover .bar-btn-tooltip {
+    transform: translateY(-12px);
+  }
+  .bar-btn:hover .bar-btn-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-12px);
+  }
+  .bar-btn:first-child:hover .bar-btn-tooltip,
+  .bar-btn:last-child:hover .bar-btn-tooltip {
+    transform: translateY(-12px);
+  }
+  .bar-btn-tooltip strong {
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--card-bg);
+  }
+
+  /* ── Empty / loading ── */
+  .kds-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 12px;
+    color: var(--txt-light);
+    grid-column: 1 / -1;
+  }
+  .kds-empty-icon { font-size: 50px; opacity: 0.25; }
+  .kds-empty-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--txt-mid);
+  }
+  .kds-empty-sub { font-size: 13px; }
+
+  .spinner {
+    width: 30px; height: 30px;
+    border: 3px solid var(--rail-b);
+    border-top-color: var(--bump);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ═══════════════════════════════════════
+     EDIT MODAL
+  ═══════════════════════════════════════ */
+  .edit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .edit-overlay.open { display: flex; }
+
+  .edit-modal {
+    background: var(--rail);
+    border: 2px solid var(--rail-b);
+    border-radius: 8px;
+    width: min(560px, 92vw);
+    height: 85vh;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    animation: modalIn 0.22s ease-out;
+    overflow: hidden;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(12px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+  }
+
+  .edit-modal-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--rail-b);
+    flex-shrink: 0;
+  }
+  .edit-modal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--card-bg);
+  }
+  .edit-modal-close {
+    background: none;
+    border: 1.5px solid var(--rail-b);
+    border-radius: 4px;
+    color: var(--txt-light);
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .edit-modal-close:hover { border-color: var(--recall); color: var(--recall); }
+
+  .edit-modal-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rail-b) transparent;
+  }
+
+  .edit-section-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--txt-light);
+    margin-bottom: 6px;
+  }
+
+  .edit-notes-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--rail-b);
+    border-radius: 4px;
+    color: var(--card-bg);
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px;
+    resize: vertical;
+    min-height: 36px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s;
+  }
+  .edit-notes-input:focus {
+    outline: none;
+    border-color: var(--info);
+  }
+
+  .edit-item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(37,39,32,0.5);
+  }
+  .edit-item-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--card-bg);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .edit-item-price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--txt-light);
+    flex-shrink: 0;
+  }
+
+  .edit-qty-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .edit-qty-btn {
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid var(--rail-b);
+    background: var(--bg);
+    color: var(--card-bg);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .edit-qty-btn:first-child { border-radius: 4px 0 0 4px; }
+  .edit-qty-btn:last-child  { border-radius: 0 4px 4px 0; }
+  .edit-qty-btn:hover { border-color: var(--bump); background: rgba(34,196,90,0.1); }
+  .edit-qty-val {
+    width: 28px;
+    height: 24px;
+    border-top: 1.5px solid var(--rail-b);
+    border-bottom: 1.5px solid var(--rail-b);
+    border-left: none;
+    border-right: none;
+    background: var(--bg);
+    color: var(--card-bg);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .edit-item-note-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--rail-b);
+    border-radius: 3px;
+    color: var(--txt-light);
+    font-family: 'Barlow', sans-serif;
+    font-size: 11px;
+    font-style: italic;
+    padding: 3px 8px;
+    margin: 3px 0 0 32px;
+    transition: border-color 0.15s;
+  }
+  .edit-item-note-input:focus {
+    outline: none;
+    border-color: var(--info);
+    color: var(--card-bg);
+  }
+
+  .edit-item-remove {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 4px;
+    background: rgba(212,43,43,0.12);
+    color: var(--recall);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .edit-item-remove:hover { background: rgba(212,43,43,0.3); }
+
+  /* Add-item section (fixed below scroll area) */
+  .edit-modal-add {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border-top: 1px solid var(--rail-b);
+    position: relative;
+  }
+  .edit-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .edit-search-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1.5px solid var(--rail-b);
+    border-radius: 4px;
+    color: var(--card-bg);
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px;
+    transition: border-color 0.15s;
+  }
+  .edit-search-input:focus {
+    outline: none;
+    border-color: var(--bump);
+  }
+  .edit-search-clear {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 4px;
+    background: var(--rail-b);
+    color: var(--txt-light);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.12s, background 0.12s;
+  }
+  .edit-search-clear:hover { color: var(--card-bg); background: rgba(212,43,43,0.25); }
+  .edit-search-results {
+    position: absolute;
+    top: 100%;
+    left: 14px;
+    right: 14px;
+    max-height: 180px;
+    overflow-y: auto;
+    background: var(--bg);
+    border: 1.5px solid var(--rail-b);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 25;
+    display: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rail-b) transparent;
+  }
+  .edit-search-results.open { display: block; }
+  .edit-search-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid rgba(37,39,32,0.4);
+  }
+  .edit-search-item:last-child { border-bottom: none; }
+  .edit-search-item:hover { background: var(--rail); }
+  .edit-search-item-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--card-bg);
+  }
+  .edit-search-item-cat {
+    font-size: 9px;
+    color: var(--txt-light);
+    margin-left: 6px;
+  }
+  .edit-search-item-price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--bump);
+    flex-shrink: 0;
+  }
+  .edit-search-empty {
+    padding: 8px;
+    font-size: 11px;
+    color: var(--txt-light);
+    text-align: center;
+  }
+
+  /* Option selection panel (shown when a search item has options) */
+  .edit-opt-panel {
+    padding: 6px 10px 8px;
+    background: var(--rail);
+    border-bottom: 1px solid rgba(37,39,32,0.5);
+  }
+  .edit-opt-panel-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--txt-light);
+    margin-bottom: 4px;
+  }
+  .edit-opt-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .edit-opt-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    border: 1.5px solid var(--rail-b);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--txt-light);
+    font-family: 'Barlow', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color 0.12s, color 0.12s, background 0.12s;
+    user-select: none;
+  }
+  .edit-opt-pill:hover { border-color: var(--bump); color: var(--card-bg); }
+  .edit-opt-pill.selected {
+    border-color: var(--bump);
+    background: rgba(34,196,90,0.15);
+    color: var(--bump);
+    font-weight: 600;
+  }
+  .edit-opt-pill-price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    opacity: 0.8;
+  }
+  .edit-opt-add-btn {
+    margin-top: 6px;
+    padding: 4px 14px;
+    border: none;
+    border-radius: 3px;
+    background: var(--bump);
+    color: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: filter 0.12s;
+  }
+  .edit-opt-add-btn:hover { filter: brightness(1.15); }
+  .edit-opt-add-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: none;
+  }
+
+  /* Options shown on existing items in the edit list */
+  .edit-item-opts {
+    padding: 2px 0 0 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .edit-item-opt-tag {
+    font-size: 10px;
+    color: var(--bump);
+    background: rgba(34,196,90,0.1);
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  .edit-modal-footer {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    border-top: 2px solid var(--rail-b);
+    flex-shrink: 0;
+  }
+  .edit-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: filter 0.12s;
+  }
+  .edit-btn:hover { filter: brightness(1.1); }
+  .edit-btn.save { background: var(--bump); color: #fff; }
+  .edit-btn.cancel { background: var(--rail-b); color: var(--txt-light); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     PICKER SCREEN
+═══════════════════════════════════════ -->
+<div id="pickerScreen">
+  <div class="picker-title">Kitchen <span>Display</span></div>
+  <p class="picker-sub">Select your station</p>
+  <div class="picker-grid" id="pickerGrid">
+    <p class="picker-loading">Loading…</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     KDS SCREEN
+═══════════════════════════════════════ -->
+<div id="kdsScreen">
+
+  <div class="kds-header">
+    <div class="kds-header-left">
+      <button class="kds-back" onclick="goToPicker()">← BACK</button>
+      <span class="kds-resto-name" id="kdsRestoName">—</span>
+    </div>
+    <div class="kds-header-center">
+      <div class="hdr-stat new">
+        <div class="hdr-stat-dot"></div>
+        <span class="hdr-stat-val" id="cntNew">0</span>
+        <span class="hdr-stat-lbl">New</span>
+      </div>
+      <div class="hdr-stat prep">
+        <div class="hdr-stat-dot"></div>
+        <span class="hdr-stat-val" id="cntPrep">0</span>
+        <span class="hdr-stat-lbl">Cooking</span>
+      </div>
+      <div class="hdr-stat ready">
+        <div class="hdr-stat-dot"></div>
+        <span class="hdr-stat-val" id="cntReady">0</span>
+        <span class="hdr-stat-lbl">Ready</span>
+      </div>
+    </div>
+    <div class="kds-header-right">
+      <div class="kds-refresh-ring">
+        <svg width="32" height="32" viewBox="0 0 32 32">
+          <circle class="ring-bg" cx="16" cy="16" r="13" />
+          <circle class="ring-fg" cx="16" cy="16" r="13" id="ringFg"
+                  stroke-dasharray="81.68" stroke-dashoffset="0" />
+        </svg>
+      </div>
+      <div class="kds-clock" id="kdsClock">00:00:00</div>
+    </div>
+  </div>
+
+  <div class="kds-body">
+    <div class="kds-rail">
+      <div class="rail-title">Items · Active</div>
+      <div class="rail-scroll" id="railScroll">
+        <div class="rail-empty">No active orders</div>
+      </div>
+    </div>
+    <div class="kds-grid-wrap">
+      <div class="kds-grid" id="kdsGrid">
+        <div class="kds-empty">
+          <div class="spinner"></div>
+          <p class="kds-empty-sub">Loading orders…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kds-bar">
+    <button class="bar-btn bump-btn" onclick="bumpSelected()">
+      <span class="bar-btn-tooltip"><strong>BUMP</strong> Advances the selected ticket one step along the status chain (New → Cooking → Ready → Served). It's the most-used button; in a real KDS you'd tap it constantly to move tickets forward.</span>
+      <span class="bar-icon">▶</span>BUMP
+    </button>
+    <button class="bar-btn cook-btn" onclick="advanceSelected('preparing')">
+      <span class="bar-btn-tooltip"><strong>COOKING</strong> Jumps the selected ticket directly to "Preparing", regardless of current status. Useful if a ticket was accidentally skipped past.</span>
+      <span class="bar-icon">🍳</span>COOKING
+    </button>
+    <button class="bar-btn" onclick="advanceSelected('ready')">
+      <span class="bar-btn-tooltip"><strong>READY</strong> Jumps directly to "Ready", signalling the pass that the order is plated and waiting for a runner.</span>
+      <span class="bar-icon">✓</span>READY
+    </button>
+    <button class="bar-btn" onclick="advanceSelected('served')">
+      <span class="bar-btn-tooltip"><strong>SERVED</strong> Marks the ticket as delivered to the room. It drops to the bottom of the grid and dims out.</span>
+      <span class="bar-icon">🚚</span>SERVED
+    </button>
+    <button class="bar-btn info-btn" onclick="showOrderInfo()">
+      <span class="bar-btn-tooltip"><strong>INFO</strong> Pops an alert with the full order details: order ID, room, party size, payment method, itemised prices, and any notes. Handy if a runner has a question.</span>
+      <span class="bar-icon">ℹ</span>INFO
+    </button>
+    <button class="bar-btn info-btn" onclick="editSelected()">
+      <span class="bar-btn-tooltip"><strong>EDIT</strong> Opens an editor for the selected ticket. You can change item quantities, remove items, add new items from the menu, and edit notes.</span>
+      <span class="bar-icon">✏</span>EDIT
+    </button>
+    <button class="bar-btn recall-btn" onclick="recallLast()">
+      <span class="bar-btn-tooltip"><strong>RECALL</strong> Puts the last ticket you marked as Served back to Ready. Covers the common mistake of bumping a ticket before the runner has actually left with it.</span>
+      <span class="bar-icon">↩</span>RECALL
+    </button>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     EDIT MODAL
+═══════════════════════════════════════ -->
+<div class="edit-overlay" id="editOverlay">
+  <div class="edit-modal">
+    <div class="edit-modal-hdr">
+      <span class="edit-modal-title" id="editModalTitle">Edit Order</span>
+      <button class="edit-modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-section-lbl">Order Notes</div>
+      <textarea class="edit-notes-input" id="editOrderNotes" placeholder="Order-level notes…"></textarea>
+
+      <div class="edit-section-lbl">Items</div>
+      <div id="editItemsList"></div>
+    </div>
+    <div class="edit-modal-add">
+      <div class="edit-section-lbl" style="margin-bottom:4px">Add Item</div>
+      <div class="edit-search-wrap">
+        <input class="edit-search-input" id="editSearchInput"
+               type="text" placeholder="Type to search menu…"
+               oninput="filterMenuItems(this.value)"
+               onfocus="filterMenuItems(this.value)" />
+        <button type="button" class="edit-search-clear" onclick="clearEditSearch()" aria-label="Clear search">&times;</button>
+      </div>
+      <div class="edit-search-results" id="editSearchResults"></div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="edit-btn cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="edit-btn save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────────────
+const REFRESH_SEC = 15;
+const RING_C = 81.68; // 2 * π * 13
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const S = {
+  restaurants: [],
+  restoId: null,
+  orders: [],
+  selectedId: null,
+  lastBumped: null,
+  knownIds: new Set(),
+  countdown: REFRESH_SEC,
+  tickInterval: null,
+  elapsedInterval: null,
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const pad = n => String(n).padStart(2, '0');
+
+/** Parse "HH:MM" or "HH:MM:SS" to minutes since midnight */
+function timeToMins(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+  const parts = s.split(':').map(Number);
+  if (parts.length < 2) return null;
+  return (parts[0] || 0) * 60 + (parts[1] || 0);
+}
+
+/** True if current local time is within open_from..open_until (strings like "07:00" or "07:00:00") */
+function isCurrentlyOpen(openFrom, openUntil) {
+  const from = timeToMins(openFrom);
+  const until = timeToMins(openUntil);
+  if (from == null || until == null) return true; // no hours set => treat as open
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  if (from <= until) return mins >= from && mins < until;   // e.g. 07:00–22:00
+  return mins >= from || mins < until;                       // overnight e.g. 22:00–02:00
+}
+
+function formatHM(iso) {
+  // API stores UTC without timezone marker — treat as UTC
+  const d = new Date(iso.endsWith('Z') ? iso : iso + 'Z');
+  return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
+
+function elapsedLabel(iso) {
+  const secs = Math.floor((Date.now() - new Date(iso.endsWith('Z') ? iso : iso + 'Z')) / 1000);
+  if (secs < 60) return `${secs}s`;
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h${pad(mins % 60)}m`;
+}
+
+function ageClass(iso, status) {
+  if (status === 'served') return '';
+  const mins = (Date.now() - new Date(iso.endsWith('Z') ? iso : iso + 'Z')) / 60000;
+  if (mins > 20) return 'urgent';
+  if (mins > 10) return 'warn';
+  return '';
+}
+
+// ─── URL ──────────────────────────────────────────────────────────────────────
+function getUrlResto() { return new URLSearchParams(window.location.search).get('r'); }
+function setUrlResto(id) {
+  const url = new URL(window.location);
+  id ? url.searchParams.set('r', id) : url.searchParams.delete('r');
+  history.replaceState(null, '', url);
+}
+
+// ─── Clock & ring ─────────────────────────────────────────────────────────────
+function tickClock() {
+  const d = new Date();
+  document.getElementById('kdsClock').textContent =
+    `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function updateRing() {
+  const pct = S.countdown / REFRESH_SEC;
+  document.getElementById('ringFg').setAttribute('stroke-dashoffset', RING_C * (1 - pct));
+}
+
+function refreshElapsed() {
+  document.querySelectorAll('.ticket').forEach(card => {
+    const el = card.querySelector('.ticket-elapsed');
+    if (el && card.dataset.created) {
+      el.textContent = elapsedLabel(card.dataset.created);
+      card.dataset.age = ageClass(card.dataset.created, card.dataset.status);
+    }
+  });
+}
+
+// ─── Load restaurants ──────────────────────────────────────────────────────────
+async function loadRestaurants() {
+  try {
+    const res = await fetch('/api/restaurants');
+    S.restaurants = await res.json();
+    renderPicker();
+    const urlR = getUrlResto();
+    if (urlR) selectResto(urlR);
+  } catch (e) {
+    document.getElementById('pickerGrid').innerHTML =
+      '<p class="picker-loading" style="color:#d42b2b">Failed to load. Is the server running?</p>';
+  }
+}
+
+// ─── Picker ───────────────────────────────────────────────────────────────────
+function renderPicker() {
+  const grid = document.getElementById('pickerGrid');
+  if (!S.restaurants.length) {
+    grid.innerHTML = '<p class="picker-loading">No restaurants found.</p>';
+    return;
+  }
+  grid.innerHTML = S.restaurants.map(r => {
+    const hours = r.open_from && r.open_until
+      ? `${r.open_from.slice(0, 5)} – ${r.open_until.slice(0, 5)}`
+      : 'Hours not set';
+    const active = isCurrentlyOpen(r.open_from, r.open_until);
+    const inactiveClass = active ? '' : ' inactive';
+    return `<div class="picker-card${inactiveClass}" onclick="selectResto('${r.id}')">
+      <div class="picker-card-name">${r.name}</div>
+      <div class="picker-card-hours">${hours}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectResto(id) {
+  const r = S.restaurants.find(x => x.id === id);
+  if (!r) return;
+  S.restoId = id;
+  S.orders = [];
+  S.knownIds = new Set();
+  S.selectedId = null;
+  setUrlResto(id);
+
+  document.getElementById('kdsRestoName').textContent = r.name.toUpperCase();
+  document.getElementById('pickerScreen').style.display = 'none';
+  document.getElementById('kdsScreen').style.display = 'flex';
+
+  clearInterval(S.tickInterval);
+  clearInterval(S.elapsedInterval);
+  S.countdown = REFRESH_SEC;
+
+  S.tickInterval = setInterval(() => {
+    tickClock();
+    S.countdown--;
+    updateRing();
+    if (S.countdown <= 0) {
+      loadOrders();
+      S.countdown = REFRESH_SEC;
+    }
+  }, 1000);
+  S.elapsedInterval = setInterval(refreshElapsed, 8000);
+
+  tickClock();
+  updateRing();
+  loadOrders();
+}
+
+function goToPicker() {
+  clearInterval(S.tickInterval);
+  clearInterval(S.elapsedInterval);
+  S.restoId = null;
+  setUrlResto(null);
+  document.getElementById('kdsScreen').style.display = 'none';
+  document.getElementById('pickerScreen').style.display = 'flex';
+}
+
+// ─── Load orders ──────────────────────────────────────────────────────────────
+async function loadOrders() {
+  if (!S.restoId) return;
+  try {
+    const res = await fetch(`/api/kitchen/orders?restaurant_id=${S.restoId}`);
+    if (!res.ok) throw new Error();
+    const orders = await res.json();
+
+    // Flash header on new ticket
+    if (S.knownIds.size > 0) {
+      const newOnes = orders.filter(o => !S.knownIds.has(o.id));
+      if (newOnes.length) flashNewHeader();
+    }
+    orders.forEach(o => S.knownIds.add(o.id));
+    S.orders = orders;
+    renderKDS();
+  } catch (e) {
+    console.error('Load orders failed', e);
+  }
+}
+
+function flashNewHeader() {
+  const hdr = document.querySelector('.kds-header');
+  hdr.style.background = 'rgba(212,43,43,0.3)';
+  setTimeout(() => { hdr.style.background = ''; }, 700);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderKDS() {
+  renderStats();
+  renderRail();
+  renderGrid();
+}
+
+function renderStats() {
+  const c = { received: 0, preparing: 0, ready: 0 };
+  S.orders.forEach(o => { if (c[o.status] !== undefined) c[o.status]++; });
+  document.getElementById('cntNew').textContent   = c.received;
+  document.getElementById('cntPrep').textContent  = c.preparing;
+  document.getElementById('cntReady').textContent = c.ready;
+}
+
+function renderRail() {
+  const counts = {};
+  S.orders
+    .filter(o => o.status !== 'served')
+    .forEach(o => o.items.forEach(it => {
+      counts[it.name] = (counts[it.name] || 0) + it.quantity;
+    }));
+
+  const rail = document.getElementById('railScroll');
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  if (!entries.length) {
+    rail.innerHTML = '<div class="rail-empty">No active orders</div>';
+    return;
+  }
+  rail.innerHTML = entries.map(([name, qty]) =>
+    `<div class="rail-item">
+       <span class="rail-item-name">${name}</span>
+       <span class="rail-item-qty${qty >= 4 ? ' high' : ''}">${qty}</span>
+     </div>`
+  ).join('');
+}
+
+function renderGrid() {
+  const grid = document.getElementById('kdsGrid');
+  const STATUS_RANK = { received: 0, preparing: 1, ready: 2, served: 3 };
+  const sorted = [...S.orders].sort((a, b) => {
+    const sr = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+    return sr !== 0 ? sr : new Date(a.created_at) - new Date(b.created_at);
+  });
+
+  if (!sorted.length) {
+    grid.innerHTML = `<div class="kds-empty">
+      <div class="kds-empty-icon">✓</div>
+      <p class="kds-empty-title">All clear</p>
+      <p class="kds-empty-sub">Waiting for incoming orders…</p>
+    </div>`;
+    return;
+  }
+
+  const hasSel = sorted.some(o => o.id === S.selectedId);
+  grid.className = 'kds-grid' + (hasSel ? ' has-selection' : '');
+  grid.innerHTML = sorted.map((o, i) => renderTicket(o, i)).join('');
+}
+
+function renderTicket(order, i) {
+  const NEXT      = { received: 'preparing', preparing: 'ready', ready: 'served' };
+  const NEXT_LBL  = { received: 'Start cooking', preparing: 'Mark ready', ready: 'Mark served' };
+  const NEXT_CLS  = { received: 'primary', preparing: 'primary prep-clr', ready: 'primary ready-clr' };
+
+  const next = NEXT[order.status];
+  const actionBtn = next
+    ? `<button class="ticket-act-btn ${NEXT_CLS[order.status]}"
+         onclick="event.stopPropagation();advanceOrder('${order.id}','${next}')">${NEXT_LBL[order.status]}</button>`
+    : `<button class="ticket-act-btn dimmed" disabled>Served</button>`;
+
+  const payLbl = order.payment_method === 'room_bill' ? 'BILL' : 'CASH';
+  const age = ageClass(order.created_at, order.status);
+  const isSel = order.id === S.selectedId;
+
+  return `<div class="ticket${isSel ? ' selected' : ''}"
+    data-id="${order.id}"
+    data-status="${order.status}"
+    data-created="${order.created_at}"
+    data-age="${age}"
+    style="animation-delay:${i * 35}ms"
+    onclick="selectTicket('${order.id}')">
+
+    <div class="ticket-hdr">
+      <div class="ticket-hdr-time">
+        <div class="ticket-time">${formatHM(order.created_at)}</div>
+        <div class="ticket-elapsed">${elapsedLabel(order.created_at)}</div>
+      </div>
+      <div class="ticket-hdr-room">
+        <span class="ticket-room-lbl">Room</span>
+        <span class="ticket-room-val">${order.room_id}</span>
+        <span class="ticket-meta">👥 ${order.party_size} · ${payLbl}</span>
+      </div>
+    </div>
+
+    <div class="ticket-body">
+      ${order.items.map(it => {
+        const optLabels = (it.options || []).map(o => o.label).filter(Boolean);
+        const optStr = optLabels.length ? `<div class="ti-item-note">⤷ ${optLabels.join(', ')}</div>` : '';
+        const noteStr = it.notes ? `<div class="ti-item-note" style="color:var(--s-new)">📝 ${it.notes}</div>` : '';
+        return `<div class="ticket-item">
+           <span class="ti-qty">${it.quantity}×</span>
+           <span class="ti-name">${it.name}</span>
+         </div>${optStr}${noteStr}`;
+      }).join('')}
+    </div>
+
+    ${order.notes ? `<div class="ticket-notes"><span class="ticket-notes-lbl">⚠ Notes</span>${order.notes}</div>` : ''}
+
+    <div class="ticket-actions">
+      ${actionBtn}
+      <button class="ticket-act-btn dimmed" onclick="event.stopPropagation();openEditModal('${order.id}')">Edit</button>
+      <button class="ticket-act-btn dimmed" onclick="event.stopPropagation();cancelOrder('${order.id}')">Cancel</button>
+    </div>
+  </div>`;
+}
+
+// ─── Ticket interaction ───────────────────────────────────────────────────────
+function selectTicket(id) {
+  S.selectedId = S.selectedId === id ? null : id;
+  document.querySelectorAll('.ticket').forEach(c => {
+    c.classList.toggle('selected', c.dataset.id === S.selectedId);
+  });
+  const grid = document.getElementById('kdsGrid');
+  grid.className = 'kds-grid' + (S.selectedId ? ' has-selection' : '');
+}
+
+async function advanceOrder(id, newStatus) {
+  const card = document.querySelector(`.ticket[data-id="${id}"]`);
+  if (card) card.style.opacity = '0.4';
+  try {
+    const res = await fetch(`/api/kitchen/orders/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!res.ok) throw new Error();
+    const updated = await res.json();
+    const idx = S.orders.findIndex(o => o.id === id);
+    if (idx !== -1) S.orders[idx] = updated;
+    if (newStatus === 'served') S.lastBumped = updated;
+    if (S.selectedId === id) S.selectedId = null;
+    renderKDS();
+  } catch (e) {
+    if (card) card.style.opacity = '1';
+  }
+}
+
+async function cancelOrder(id) {
+  if (!confirm('Cancel this order?')) return;
+  try {
+    const res = await fetch(`/api/orders/${id}/cancel`, { method: 'PATCH' });
+    if (!res.ok) throw new Error();
+    S.orders = S.orders.filter(o => o.id !== id);
+    if (S.selectedId === id) S.selectedId = null;
+    renderKDS();
+  } catch (e) { alert('Could not cancel order.'); }
+}
+
+// ─── Bottom bar ───────────────────────────────────────────────────────────────
+function bumpSelected() {
+  if (!S.selectedId) return flashBar();
+  const order = S.orders.find(o => o.id === S.selectedId);
+  if (!order) return;
+  const next = { received: 'preparing', preparing: 'ready', ready: 'served' }[order.status];
+  if (next) advanceOrder(order.id, next);
+}
+
+function advanceSelected(status) {
+  if (!S.selectedId) return flashBar();
+  advanceOrder(S.selectedId, status);
+}
+
+function recallLast() {
+  if (!S.lastBumped) return flashBar();
+  advanceOrder(S.lastBumped.id, 'ready').then(() => { S.lastBumped = null; });
+}
+
+function showOrderInfo() {
+  if (!S.selectedId) return flashBar();
+  const o = S.orders.find(x => x.id === S.selectedId);
+  if (!o) return;
+  const items = o.items.map(it =>
+    `  ${it.quantity}× ${it.name}  ₹${(it.unit_price * it.quantity).toFixed(2)}`
+  ).join('\n');
+  alert(`ORDER #${o.id.slice(0,8).toUpperCase()}\nRoom ${o.room_id}  ·  Party: ${o.party_size}  ·  ${o.payment_method}\nStatus: ${o.status}  ·  Total: ₹${parseFloat(o.subtotal).toFixed(2)}\n\n${items}${o.notes ? `\n\n⚠ ${o.notes}` : ''}`);
+}
+
+function flashBar() {
+  const bar = document.querySelector('.kds-bar');
+  bar.style.background = '#2a1c0a';
+  setTimeout(() => { bar.style.background = ''; }, 500);
+}
+
+// ─── Edit modal ───────────────────────────────────────────────────────────────
+const EditState = {
+  orderId: null,
+  originalOrder: null,
+  items: [],       // { id (existing item UUID | null), menu_item_id, name, unit_price, quantity, notes, isNew }
+  menuItems: [],   // full menu from API
+};
+
+function editSelected() {
+  if (!S.selectedId) return flashBar();
+  openEditModal(S.selectedId);
+}
+
+async function openEditModal(id) {
+  const order = S.orders.find(o => o.id === id);
+  if (!order) return;
+  if (order.status === 'served' || order.status === 'cancelled') {
+    alert('Cannot edit a served or cancelled order.');
+    return;
+  }
+
+  EditState.orderId = id;
+  EditState.originalOrder = order;
+  EditState.items = order.items.map(it => ({
+    id: it.id,
+    menu_item_id: it.menu_item_id,
+    name: it.name,
+    unit_price: parseFloat(it.unit_price),
+    quantity: it.quantity,
+    notes: it.notes || '',
+    isNew: false,
+    selectedOptions: (it.options || []).map(o => ({
+      id: o.menu_item_option_id,
+      label: o.label || '',
+      price_delta: parseFloat(o.price_delta || 0),
+    })),
+  }));
+
+  document.getElementById('editModalTitle').textContent =
+    `Edit Order #${id.slice(0, 8).toUpperCase()} — Room ${order.room_id}`;
+  document.getElementById('editOrderNotes').value = order.notes || '';
+  document.getElementById('editSearchInput').value = '';
+  document.getElementById('editSearchResults').classList.remove('open');
+
+  renderEditItems();
+
+  if (!EditState.menuItems.length || EditState.menuItems[0]?.restaurant_id !== order.restaurant_id) {
+    try {
+      const res = await fetch(`/api/menu-items?restaurant_id=${order.restaurant_id}`);
+      EditState.menuItems = await res.json();
+    } catch (e) {
+      EditState.menuItems = [];
+    }
+  }
+
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editOverlay').classList.remove('open');
+  EditState.orderId = null;
+  EditState.originalOrder = null;
+  EditState.items = [];
+  EditState._pendingMenuItem = null;
+  EditState._pendingOptions = new Set();
+}
+
+function renderEditItems() {
+  const list = document.getElementById('editItemsList');
+  if (!EditState.items.length) {
+    list.innerHTML = '<p style="color:var(--txt-light);font-size:13px;padding:12px 0;">No items. Add items from the menu below.</p>';
+    return;
+  }
+  list.innerHTML = EditState.items.map((it, i) => {
+    const opts = (it.selectedOptions || []);
+    const optTags = opts.length
+      ? `<div class="edit-item-opts">${opts.map(o => {
+          const delta = o.price_delta ? ` +₹${Number(o.price_delta).toFixed(2)}` : '';
+          return `<span class="edit-item-opt-tag">${o.label}${delta}</span>`;
+        }).join('')}</div>`
+      : '';
+    return `<div>
+      <div class="edit-item-row">
+        <div class="edit-qty-ctrl">
+          <button class="edit-qty-btn" onclick="editQty(${i},-1)">−</button>
+          <input class="edit-qty-val" type="text" value="${it.quantity}" readonly />
+          <button class="edit-qty-btn" onclick="editQty(${i},1)">+</button>
+        </div>
+        <span class="edit-item-name">${it.name}</span>
+        <span class="edit-item-price">₹${it.unit_price.toFixed(2)}</span>
+        <button class="edit-item-remove" onclick="removeEditItem(${i})">✕</button>
+      </div>${optTags}
+      <input class="edit-item-note-input" type="text"
+             placeholder="Item note…"
+             value="${(it.notes || '').replace(/"/g, '&quot;')}"
+             onchange="editItemNote(${i}, this.value)" />
+    </div>`;
+  }).join('');
+}
+
+function editQty(idx, delta) {
+  const it = EditState.items[idx];
+  if (!it) return;
+  it.quantity = Math.max(1, it.quantity + delta);
+  renderEditItems();
+}
+
+function editItemNote(idx, val) {
+  if (EditState.items[idx]) EditState.items[idx].notes = val;
+}
+
+function removeEditItem(idx) {
+  EditState.items.splice(idx, 1);
+  renderEditItems();
+}
+
+function clearEditSearch() {
+  document.getElementById('editSearchInput').value = '';
+  const container = document.getElementById('editSearchResults');
+  container.classList.remove('open');
+  container.innerHTML = '';
+}
+
+function filterMenuItems(query) {
+  const container = document.getElementById('editSearchResults');
+  const q = (query || '').toLowerCase().trim();
+
+  if (!q) {
+    container.classList.remove('open');
+    return;
+  }
+
+  const matches = EditState.menuItems.filter(mi =>
+    mi.name.toLowerCase().includes(q) || (mi.category || '').toLowerCase().includes(q)
+  ).slice(0, 12);
+
+  if (!matches.length) {
+    container.innerHTML = '<div class="edit-search-empty">No matching items</div>';
+    container.classList.add('open');
+    return;
+  }
+
+  container.innerHTML = matches.map((mi, i) => {
+    const hasOpts = mi.options && mi.options.length > 0;
+    const optHint = hasOpts
+      ? `<span style="font-size:9px;color:var(--s-prep);margin-left:4px">${mi.requires_option_selection ? '(choose)' : '(add-ons)'}</span>`
+      : '';
+    return `<div class="edit-search-item" onclick="selectSearchItem(${i})">
+      <span>
+        <span class="edit-search-item-name">${mi.name}</span>${optHint}
+        <span class="edit-search-item-cat">${mi.category}</span>
+      </span>
+      <span class="edit-search-item-price">₹${parseFloat(mi.price).toFixed(2)}</span>
+    </div>`;
+  }).join('');
+
+  container._matches = matches;
+  container.classList.add('open');
+}
+
+function selectSearchItem(matchIdx) {
+  const container = document.getElementById('editSearchResults');
+  const mi = container._matches && container._matches[matchIdx];
+  if (!mi) return;
+
+  if (mi.options && mi.options.length > 0) {
+    showOptionPanel(mi);
+  } else {
+    addEditItemDirect(mi, []);
+  }
+}
+
+function showOptionPanel(mi) {
+  const container = document.getElementById('editSearchResults');
+  EditState._pendingMenuItem = mi;
+  EditState._pendingOptions = new Set();
+
+  const required = mi.requires_option_selection;
+  const label = required ? 'Choose one (required)' : 'Select add-ons (optional)';
+
+  const pills = mi.options.map((o, i) => {
+    const delta = Number(o.price_delta);
+    const priceStr = delta ? `<span class="edit-opt-pill-price">+₹${delta.toFixed(2)}</span>` : '';
+    return `<span class="edit-opt-pill" data-opt-idx="${i}" onclick="toggleEditOption(${i})">${o.label} ${priceStr}</span>`;
+  }).join('');
+
+  container.innerHTML = `<div class="edit-opt-panel">
+    <div class="edit-opt-panel-lbl">${mi.name} — ${label}</div>
+    <div class="edit-opt-pills">${pills}</div>
+    <button class="edit-opt-add-btn" id="editOptAddBtn" onclick="confirmAddWithOptions()" ${required ? 'disabled' : ''}>Add to order</button>
+  </div>`;
+  container.classList.add('open');
+}
+
+function toggleEditOption(optIdx) {
+  const mi = EditState._pendingMenuItem;
+  if (!mi) return;
+  const required = mi.requires_option_selection;
+
+  if (required) {
+    EditState._pendingOptions = new Set([optIdx]);
+  } else {
+    if (EditState._pendingOptions.has(optIdx)) {
+      EditState._pendingOptions.delete(optIdx);
+    } else {
+      EditState._pendingOptions.add(optIdx);
+    }
+  }
+
+  document.querySelectorAll('.edit-opt-pill').forEach(el => {
+    const idx = parseInt(el.dataset.optIdx);
+    el.classList.toggle('selected', EditState._pendingOptions.has(idx));
+  });
+
+  if (required) {
+    const btn = document.getElementById('editOptAddBtn');
+    if (btn) btn.disabled = EditState._pendingOptions.size === 0;
+  }
+}
+
+function confirmAddWithOptions() {
+  const mi = EditState._pendingMenuItem;
+  if (!mi) return;
+
+  const selectedOpts = [...EditState._pendingOptions].map(idx => mi.options[idx]).filter(Boolean);
+  addEditItemDirect(mi, selectedOpts);
+
+  EditState._pendingMenuItem = null;
+  EditState._pendingOptions = new Set();
+}
+
+function addEditItemDirect(mi, selectedOptions) {
+  const optDelta = selectedOptions.reduce((s, o) => s + Number(o.price_delta || 0), 0);
+
+  EditState.items.push({
+    id: null,
+    menu_item_id: mi.id,
+    name: mi.name,
+    unit_price: parseFloat(mi.price) + optDelta,
+    quantity: 1,
+    notes: '',
+    isNew: true,
+    selectedOptions: selectedOptions.map(o => ({
+      id: o.id,
+      label: o.label,
+      price_delta: Number(o.price_delta || 0),
+    })),
+  });
+
+  document.getElementById('editSearchInput').value = '';
+  document.getElementById('editSearchResults').classList.remove('open');
+  renderEditItems();
+}
+
+async function saveEdit() {
+  if (!EditState.orderId || !EditState.originalOrder) return;
+
+  const orig = EditState.originalOrder;
+  const origIds = new Set(orig.items.map(it => it.id));
+  const currentIds = new Set(EditState.items.filter(it => it.id).map(it => it.id));
+
+  const items_to_remove = [...origIds].filter(id => !currentIds.has(id));
+
+  const items_to_update = [];
+  for (const it of EditState.items) {
+    if (!it.id) continue;
+    const origItem = orig.items.find(o => o.id === it.id);
+    if (!origItem) continue;
+    const qtyChanged = it.quantity !== origItem.quantity;
+    const noteChanged = (it.notes || '') !== (origItem.notes || '');
+    if (qtyChanged || noteChanged) {
+      const upd = { item_id: it.id };
+      if (qtyChanged) upd.quantity = it.quantity;
+      if (noteChanged) upd.notes = it.notes || '';
+      items_to_update.push(upd);
+    }
+  }
+
+  const items_to_add = EditState.items
+    .filter(it => it.isNew)
+    .map(it => ({
+      menu_item_id: it.menu_item_id,
+      quantity: it.quantity,
+      notes: it.notes || null,
+      option_ids: (it.selectedOptions || []).map(o => o.id).filter(Boolean),
+    }));
+
+  const newNotes = document.getElementById('editOrderNotes').value.trim();
+  const origNotes = orig.notes || '';
+  const notesPayload = newNotes !== origNotes ? newNotes : undefined;
+
+  const payload = {
+    items_to_remove,
+    items_to_update,
+    items_to_add,
+  };
+  if (notesPayload !== undefined) payload.notes = notesPayload;
+
+  try {
+    const res = await fetch(`/api/kitchen/orders/${EditState.orderId}/edit`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      alert('Failed to save: ' + (err?.detail || 'Unknown error'));
+      return;
+    }
+    const updated = await res.json();
+    const idx = S.orders.findIndex(o => o.id === EditState.orderId);
+    if (idx !== -1) S.orders[idx] = updated;
+    closeEditModal();
+    renderKDS();
+  } catch (e) {
+    alert('Network error saving edit.');
+  }
+}
+
+document.getElementById('editOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('editOverlay').classList.contains('open')) {
+    closeEditModal();
+  }
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────────
+loadRestaurants();
+</script>
+</body>
+</html>
