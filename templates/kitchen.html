@@ -709,8 +709,9 @@
     border: 2px solid var(--rail-b);
     border-radius: 8px;
     width: min(560px, 92vw);
-    height: 85vh;
-    max-height: 85vh;
+    /* Stay within viewport; body is scaled so use conservative height and internal scroll */
+    height: 60vh;
+    max-height: 60vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 16px 48px rgba(0,0,0,0.6);
