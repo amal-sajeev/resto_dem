@@ -716,7 +716,8 @@
     flex-direction: column;
     box-shadow: 0 16px 48px rgba(0,0,0,0.6);
     animation: modalIn 0.22s ease-out;
-    overflow: hidden;
+    /* overflow: visible so Add Item dropdown can overlay the footer; body still scrolls via overflow-y: auto */
+    overflow: visible;
   }
   @keyframes modalIn {
     from { opacity: 0; transform: scale(0.95) translateY(12px); }
@@ -936,15 +937,16 @@
   .edit-search-clear:hover { color: var(--card-bg); background: rgba(212,43,43,0.25); }
   .edit-search-results {
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     left: 14px;
     right: 14px;
+    margin-bottom: 2px;
     max-height: 180px;
     overflow-y: auto;
     background: var(--bg);
     border: 1.5px solid var(--rail-b);
-    border-top: none;
-    border-radius: 0 0 4px 4px;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
     z-index: 25;
     display: none;
     scrollbar-width: thin;
