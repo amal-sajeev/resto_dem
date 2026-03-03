@@ -779,6 +779,30 @@
   }
   .btn-outline:hover { border-color: var(--gold-dim); color: var(--text); }
 
+  .btn-cancel {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.1s;
+    background: transparent;
+    color: var(--danger);
+    border: 1.5px solid rgba(192, 97, 74, 0.5);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-cancel:hover {
+    background: rgba(192, 97, 74, 0.12);
+    border-color: var(--danger);
+  }
+  .btn-cancel:active { transform: scale(0.98); }
+  .btn-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
+
   /* ── Menu view ── */
   .menu-header {
     padding: 20px 20px 0;
@@ -1744,6 +1768,12 @@
 
       <!-- Actions -->
       <div style="margin-top:32px;display:flex;flex-direction:column;gap:12px;">
+        <div id="odCancelWrap" style="display:none;">
+          <button type="button" class="btn-cancel" id="odCancelBtn" onclick="cancelOrder()" aria-label="Cancel this order">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Cancel order
+          </button>
+        </div>
         <button class="btn-outline" onclick="startOver()">Order from another restaurant</button>
       </div>
     </div>
@@ -2197,9 +2227,14 @@ async function showConfirmationForOrder(orderId) {
       ? 'Order complete'
       : order.status === 'ready' ? 'On its way…'
       : order.status === 'preparing' ? 'Being prepared…'
+      : order.status === 'cancelled' ? 'Order cancelled'
       : 'Order received';
     document.getElementById('odRef').textContent = `Ref #${ordRef}`;
     document.getElementById('roomTagConfirm').querySelector('.room-tag-num').textContent = getRoomBadgeText();
+
+    // Cancel button: only when status is received
+    const cancelWrap = document.getElementById('odCancelWrap');
+    if (cancelWrap) cancelWrap.style.display = order.status === 'received' ? 'block' : 'none';
 
     // Status track
     updateConfirmationStatus(order.status);
@@ -2266,10 +2301,10 @@ function updateConfirmationStatus(status) {
     const stepIdx = ORDER_STATUS_ORDER.indexOf(step);
     const dot = el.querySelector('.status-dot');
     const lbl = el.querySelector('.status-label');
-    if (stepIdx <= idx) {
+    if (stepIdx < idx) {
       if (dot) { dot.classList.add('done'); dot.classList.remove('active'); dot.textContent = '✓'; }
       if (lbl) { lbl.classList.add('done-lbl'); lbl.classList.remove('active-lbl'); }
-    } else if (stepIdx === idx + 1) {
+    } else if (stepIdx === idx) {
       if (dot) { dot.classList.add('active'); dot.classList.remove('done'); dot.textContent = stepEmoji[step] || '✓'; }
       if (lbl) { lbl.classList.add('active-lbl'); lbl.classList.remove('done-lbl'); }
     } else {
@@ -2305,7 +2340,10 @@ function startOrderStatusPolling() {
       if (titleEl) titleEl.textContent = order.status === 'served' ? 'Order complete'
         : order.status === 'ready' ? 'On its way…'
         : order.status === 'preparing' ? 'Being prepared…'
+        : order.status === 'cancelled' ? 'Order cancelled'
         : 'Order received';
+      const cancelWrap = document.getElementById('odCancelWrap');
+      if (cancelWrap) cancelWrap.style.display = order.status === 'received' ? 'block' : 'none';
       if (order.status === 'served' || order.status === 'cancelled') stopOrderStatusPolling();
     } catch (_) {
       orderStatusPollFailures++;
@@ -2318,6 +2356,29 @@ function stopOrderStatusPolling() {
   if (orderStatusPollingTimer) {
     clearInterval(orderStatusPollingTimer);
     orderStatusPollingTimer = null;
+  }
+}
+
+async function cancelOrder() {
+  const orderId = state.trackedOrderId;
+  if (!orderId) return;
+  const btn = document.getElementById('odCancelBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(`/api/orders/${orderId}/cancel`, { method: 'PATCH' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Could not cancel order');
+    }
+    const order = await res.json();
+    document.getElementById('odTitle').textContent = 'Order cancelled';
+    const cancelWrap = document.getElementById('odCancelWrap');
+    if (cancelWrap) cancelWrap.style.display = 'none';
+    stopOrderStatusPolling();
+    showToast('Order cancelled');
+  } catch (e) {
+    showToast(e.message || 'Failed to cancel order');
+    if (btn) btn.disabled = false;
   }
 }
 
