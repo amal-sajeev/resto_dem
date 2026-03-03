@@ -18,7 +18,7 @@
     --gold-lt: #e8c98a;
     --gold-dim: #7a6340;
     --text: #f0ebe3;
-    --text-muted: #8a7f72;
+    --text-muted: #9d9184;
     --text-dim: #4a443d;
     --danger: #c0614a;
     --success: #6aab7e;
@@ -212,7 +212,7 @@
     box-sizing: border-box;
   }
   .in-progress-label {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--gold-dim);
@@ -231,7 +231,7 @@
     margin-bottom: 12px;
   }
   .grid-section-label {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--gold-dim);
@@ -282,7 +282,7 @@
     max-width: 160px;
   }
   .in-progress-card-sub {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-dim);
     letter-spacing: 0.06em;
     margin-top: 2px;
@@ -297,7 +297,7 @@
     border-radius: 100px;
     background: rgba(201,169,110,0.08);
     border: 1px solid rgba(201,169,110,0.25);
-    font-size: 10px;
+    font-size: 11px;
     color: var(--gold);
     font-weight: 500;
     letter-spacing: 0.1em;
@@ -374,7 +374,7 @@
     color: var(--gold);
   }
   .mini-label {
-    font-size: 8px;
+    font-size: 11px;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -780,6 +780,8 @@
     overflow-x: auto;
     padding-bottom: 16px;
     scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
   }
   .cat-tabs::-webkit-scrollbar { display: none; }
   .cat-tab {
@@ -896,8 +898,8 @@
     overflow: hidden;
   }
   .qty-btn {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     background: none;
     border: none;
     color: var(--text);
@@ -921,8 +923,8 @@
     background: var(--gold);
     border: none;
     border-radius: 100px;
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     font-size: 20px;
     color: var(--bg);
     cursor: pointer;
@@ -998,9 +1000,9 @@
     border: none;
     color: var(--text-dim);
     cursor: pointer;
-    font-size: 18px;
-    width: 28px;
-    height: 28px;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1231,7 +1233,7 @@
     box-shadow: 0 0 18px rgba(201,169,110,0.35);
   }
   .status-label {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -1387,6 +1389,10 @@
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
 
   /* ── Error / Empty ── */
   .error-msg, .empty-msg {
@@ -1474,6 +1480,50 @@
     color: var(--text-dim);
     margin-bottom: 16px;
   }
+
+  /* ── Responsive: in-progress card ── */
+  @media (max-width: 540px) {
+    .in-progress-card-inner {
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    .in-progress-card-meta {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .in-progress-card-title {
+      max-width: none;
+    }
+    .in-progress-status-pill {
+      order: 2;
+    }
+    .mini-track-wrap {
+      flex-basis: 100%;
+      order: 3;
+    }
+  }
+
+  /* ── Responsive: small phones ── */
+  @media (max-width: 360px) {
+    .menu-item-img, .menu-item-img-placeholder { width: 64px; height: 64px; }
+    .hero-title { padding: 0 8px; }
+    .resto-img, .resto-img-placeholder { height: 140px; }
+  }
+
+  /* ── Accessibility ── */
+  :focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1485,7 +1535,7 @@
 </div>
 
 <!-- Toast -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" aria-live="polite"></div>
 
 <!-- ══════════════════════════════════ -->
 <!-- VIEW: Restaurants                  -->
@@ -1527,7 +1577,7 @@
         </button>
         <button class="cart-btn" id="cartBtnMenu" onclick="showView('viewCart')">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5A.5.5 0 0 1 0 1.5z"/><circle cx="5.5" cy="14.5" r="1.5"/><circle cx="11.5" cy="14.5" r="1.5"/></svg>
-          <span class="cart-badge" id="cartBadgeMenu">0</span>
+          <span class="cart-badge" id="cartBadgeMenu" aria-live="polite">0</span>
         </button>
       </div>
     </div>
@@ -1661,9 +1711,9 @@
 <!-- OVERLAY: Party size               -->
 <!-- ══════════════════════════════════ -->
 <div class="overlay" id="partyOverlay" onclick="closePartySheetOnBg(event)">
-  <div class="party-sheet">
+  <div class="party-sheet" role="dialog" aria-modal="true" aria-labelledby="partySheetTitle">
     <div class="sheet-handle"></div>
-    <h3 class="sheet-title">How many guests?</h3>
+    <h3 class="sheet-title" id="partySheetTitle">How many guests?</h3>
     <p class="sheet-sub">Helps the kitchen plan portions</p>
     <div class="party-stepper">
       <button class="stepper-btn" id="partyMinus" onclick="adjustParty(-1)">−</button>
@@ -1678,7 +1728,7 @@
 <!-- OVERLAY: Item detail              -->
 <!-- ══════════════════════════════════ -->
 <div class="overlay" id="itemDetailOverlay" onclick="closeItemDetailOnBg(event)">
-  <div class="item-detail-sheet" onclick="event.stopPropagation()">
+  <div class="item-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="itemDetailName" onclick="event.stopPropagation()">
     <div class="item-detail-img-wrap" id="itemDetailImgWrap"></div>
     <div class="item-detail-body">
       <h3 class="item-detail-name" id="itemDetailName"></h3>
@@ -1802,7 +1852,16 @@ function showView(id, pushHistory = true) {
   const next = document.getElementById(id);
   next.classList.add('active');
   next.scrollTop = 0;
+  if (pushHistory) history.pushState({ view: id }, '', '');
 }
+
+window.addEventListener('popstate', (e) => {
+  if (e.state?.view) {
+    showView(e.state.view, false);
+  } else {
+    goBack();
+  }
+});
 
 function goBack() {
   const prev = state.history.pop();
@@ -1833,10 +1892,12 @@ function openPartySheet() {
   document.getElementById('partyOverlay').classList.add('open');
   document.getElementById('partyVal').textContent = state.partySize;
   updateStepperBtns();
+  trapFocus(document.querySelector('.party-sheet'));
 }
 
 function closePartySheet() {
   document.getElementById('partyOverlay').classList.remove('open');
+  releaseFocus();
 }
 
 function closePartySheetOnBg(e) {
@@ -2032,12 +2093,13 @@ function showTrackOrder(orderId) {
 }
 
 async function showConfirmationForOrder(orderId) {
-  // Show view immediately with loading state
-  document.getElementById('odTitle').textContent = '…';
-  document.getElementById('odRef').textContent = '';
-  document.getElementById('odEyebrow').textContent = 'Your order';
-  document.getElementById('odMetaRow').innerHTML = '';
-  document.getElementById('odItemsList').innerHTML = '';
+  const skeletonBar = '<div style="height:14px;background:var(--card2);border-radius:4px;animation:pulse 1.5s ease-in-out infinite;"></div>';
+  const skeletonBarShort = '<div style="height:12px;width:60%;background:var(--card2);border-radius:4px;animation:pulse 1.5s ease-in-out infinite;"></div>';
+  document.getElementById('odTitle').innerHTML = `<div style="height:32px;width:70%;background:var(--card2);border-radius:6px;animation:pulse 1.5s ease-in-out infinite;"></div>`;
+  document.getElementById('odRef').innerHTML = skeletonBarShort;
+  document.getElementById('odEyebrow').innerHTML = `<div style="height:10px;width:40%;background:var(--card2);border-radius:3px;animation:pulse 1.5s ease-in-out infinite;"></div>`;
+  document.getElementById('odMetaRow').innerHTML = `<span class="od-meta-chip" style="width:80px;height:28px;background:var(--card2);"></span><span class="od-meta-chip" style="width:90px;height:28px;background:var(--card2);"></span>`;
+  document.getElementById('odItemsList').innerHTML = [1,2,3].map(() => `<div class="od-item"><div class="od-item-left">${skeletonBar}${skeletonBarShort}</div><div style="width:50px;height:14px;background:var(--card2);border-radius:4px;animation:pulse 1.5s ease-in-out infinite;"></div></div>`).join('');
   document.getElementById('odTotalRow').innerHTML = '';
   document.getElementById('odNotesBlock').innerHTML = '';
   showView('viewConfirmation');
@@ -2146,26 +2208,31 @@ function updateConfirmationStatus(status) {
 }
 
 let orderStatusPollingTimer = null;
+let orderStatusPollFailures = 0;
 const ORDER_POLL_INTERVAL_MS = 20000;
 
 function startOrderStatusPolling() {
   stopOrderStatusPolling();
+  orderStatusPollFailures = 0;
   if (!state.trackedOrderId) return;
   orderStatusPollingTimer = setInterval(async () => {
     if (currentView !== 'viewConfirmation' || !state.trackedOrderId) return;
     try {
       const res = await fetch(`/api/orders/${state.trackedOrderId}`);
-      if (!res.ok) return;
+      if (!res.ok) throw new Error();
+      orderStatusPollFailures = 0;
       const order = await res.json();
       updateConfirmationStatus(order.status);
-      // Update title text too
       const titleEl = document.getElementById('odTitle');
       if (titleEl) titleEl.textContent = order.status === 'served' ? 'Order complete'
         : order.status === 'ready' ? 'On its way…'
         : order.status === 'preparing' ? 'Being prepared…'
         : 'Order received';
       if (order.status === 'served' || order.status === 'cancelled') stopOrderStatusPolling();
-    } catch (_) {}
+    } catch (_) {
+      orderStatusPollFailures++;
+      if (orderStatusPollFailures === 3) showToast('Connection lost. Retrying…');
+    }
   }, ORDER_POLL_INTERVAL_MS);
 }
 
@@ -2178,7 +2245,12 @@ function stopOrderStatusPolling() {
 
 // ─── Select restaurant ────────────────────────────────────────────────────────
 async function selectRestaurant(id) {
-  state.selectedRestaurant = state.restaurants.find(r => r.id === id);
+  const r = state.restaurants.find(r => r.id === id);
+  if (r && r.open_from && r.open_until && !isOpen(r.open_from, r.open_until)) {
+    showToast('This restaurant is currently closed');
+    return;
+  }
+  state.selectedRestaurant = r;
   state.cart = {};
   updateAllCartBadges();
   openPartySheet();
@@ -2195,8 +2267,20 @@ function confirmParty() {
   closePartySheet();
   document.getElementById('partyChipLabel').textContent =
     state.partySize === 1 ? '1 guest' : `${state.partySize} guests`;
-  renderMenu();
-  showView('viewMenu');
+  if (!state.menuItems.length) {
+    const section = document.getElementById('menuSection');
+    section.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:60px 0;"><div class="spinner"></div></div>';
+    showView('viewMenu');
+    const waitForMenu = setInterval(() => {
+      if (state.menuItems.length) {
+        clearInterval(waitForMenu);
+        renderMenu();
+      }
+    }, 200);
+  } else {
+    renderMenu();
+    showView('viewMenu');
+  }
 }
 
 // ─── Item detail modal ───────────────────────────────────────────────────────
@@ -2281,10 +2365,12 @@ function openItemModal(itemId) {
   }
 
   document.getElementById('itemDetailOverlay').classList.add('open');
+  trapFocus(document.querySelector('.item-detail-sheet'));
 }
 
 function closeItemDetail() {
   document.getElementById('itemDetailOverlay').classList.remove('open');
+  releaseFocus();
   itemDetailCurrentItem = null;
 }
 
@@ -2445,10 +2531,12 @@ function changeCartQtyByKey(key, delta) {
 function removeFromCartByKey(key) {
   const entry = state.cart[key];
   const itemId = entry ? entry.item.id : null;
+  const name = entry?.item?.name;
   delete state.cart[key];
   updateAllCartBadges();
   if (itemId) renderItemControl(itemId);
   renderCart();
+  if (name) showToast(`${name} removed`);
 }
 
 function changeCartQty(id, delta) {
@@ -2462,6 +2550,7 @@ function removeFromCart(id) {
 // ─── Place order ──────────────────────────────────────────────────────────────
 async function placeOrder() {
   const btn = document.getElementById('placeOrderBtn');
+
   btn.disabled = true;
   btn.textContent = 'Placing order…';
 
@@ -2522,14 +2611,17 @@ async function placeOrder() {
 
 // ─── Live refresh of in-progress orders on restaurant screen ──────────────────
 let inProgressPollTimer = null;
+let inProgressPollFailures = 0;
 
 function startInProgressPolling() {
   stopInProgressPolling();
+  inProgressPollFailures = 0;
   inProgressPollTimer = setInterval(async () => {
     if (currentView !== 'viewRestaurants') return;
     try {
       const res = await fetch(`/api/orders?room_id=${encodeURIComponent(state.roomId)}&in_progress=true`);
-      if (!res.ok) return;
+      if (!res.ok) throw new Error();
+      inProgressPollFailures = 0;
       const orders = normalizeOrdersList(await res.json());
       const changed = JSON.stringify(orders.map(o => ({id:o.id,status:o.status}))) !==
                       JSON.stringify((state.inProgressOrders || []).map(o => ({id:o.id,status:o.status})));
@@ -2537,7 +2629,10 @@ function startInProgressPolling() {
         state.inProgressOrders = orders;
         renderInProgressBanner();
       }
-    } catch(_) {}
+    } catch(_) {
+      inProgressPollFailures++;
+      if (inProgressPollFailures === 3) showToast('Connection lost. Retrying…');
+    }
   }, 15000);
 }
 
@@ -2557,6 +2652,30 @@ function startOver() {
     .then(r => r.ok ? r.json() : [])
     .then(data => { state.inProgressOrders = normalizeOrdersList(data); renderInProgressBanner(); startInProgressPolling(); })
     .catch(() => { state.inProgressOrders = []; renderInProgressBanner(); });
+}
+
+// ─── Focus trap ───────────────────────────────────────────────────────────────
+let _trapHandler = null;
+function trapFocus(container) {
+  releaseFocus();
+  const focusable = () => container.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])');
+  _trapHandler = (e) => {
+    if (e.key !== 'Tab') return;
+    const els = focusable();
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  };
+  document.addEventListener('keydown', _trapHandler);
+  const els = focusable();
+  if (els.length) els[0].focus();
+}
+function releaseFocus() {
+  if (_trapHandler) { document.removeEventListener('keydown', _trapHandler); _trapHandler = null; }
 }
 
 // ─── Init ──────────────────────────────────────────────────────────────────────

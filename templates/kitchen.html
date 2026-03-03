@@ -16,7 +16,7 @@
     --card-bg:   #fafaf8;
     --card-b:    #e8e8e2;
     --txt-dark:  #1a1c18;
-    --txt-mid:   #555550;
+    --txt-mid:   #6e6e66;
     --txt-light: #999990;
 
     --s-new:      #d42b2b;
@@ -50,7 +50,6 @@
     font-family: 'Barlow', sans-serif;
     font-size: 15px;
     -webkit-font-smoothing: antialiased;
-    user-select: none;
   }
   body {
     width: 66.666vw;
@@ -60,6 +59,7 @@
     margin: 0;
     padding: 0;
   }
+  .ticket, .bar-btn, .picker-card, .kds-header { user-select: none; }
 
   /* ═══════════════════════════════════════
      PICKER
@@ -690,6 +690,39 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  @keyframes barShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  /* KDS Toast */
+  .kds-toast {
+    position: fixed;
+    bottom: calc(var(--bar-h) + 16px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--rail);
+    border: 1.5px solid var(--rail-b);
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bump);
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 150;
+  }
+  .kds-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
   /* ═══════════════════════════════════════
      EDIT MODAL
   ═══════════════════════════════════════ */
@@ -1095,6 +1128,117 @@
   .edit-btn:hover { filter: brightness(1.1); }
   .edit-btn.save { background: var(--bump); color: #fff; }
   .edit-btn.cancel { background: var(--rail-b); color: var(--txt-light); }
+
+  /* ═══════════════════════════════════════
+     RESPONSIVE
+  ═══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    body {
+      width: 100vw;
+      height: 100vh;
+      transform: none;
+    }
+    .kds-rail { display: none; }
+    .bar-btn-tooltip { display: none; }
+
+    /* Picker screen: scrollable on narrow viewports */
+    #pickerScreen {
+      height: 100%;
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      justify-content: flex-start;
+      padding: 24px 16px 32px;
+      align-items: center;
+    }
+    #pickerScreen .picker-title { flex-shrink: 0; }
+    #pickerScreen .picker-sub { flex-shrink: 0; }
+    #pickerScreen .picker-grid { flex: 0 0 auto; }
+
+    .kds-bar {
+      flex-wrap: wrap;
+      height: auto;
+      padding: 4px 6px;
+      gap: 4px;
+    }
+    .bar-btn {
+      flex: 0 0 auto;
+      width: calc(25% - 4px);
+      font-size: 11px;
+      padding: 8px 2px;
+      border-right: none;
+      border-radius: 4px;
+      gap: 2px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .kds-header { padding: 0 8px; gap: 6px; height: 44px; }
+    .kds-header-left { gap: 6px; }
+    .kds-back { padding: 4px 8px; font-size: 11px; }
+    .kds-resto-name { font-size: 16px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .kds-header-center { gap: 6px; }
+    .hdr-stat-lbl { display: none; }
+    .hdr-stat { padding: 4px 6px; gap: 4px; }
+    .hdr-stat-val { font-size: 14px; }
+    .kds-clock { font-size: 16px; min-width: auto; }
+    .kds-refresh-ring { display: none; }
+
+    .kds-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 6px;
+    }
+    .kds-grid-wrap { padding: 6px; }
+
+    .ticket-hdr { height: 42px; }
+    .ticket-time { font-size: 16px; }
+    .ticket-elapsed { font-size: 10px; }
+    .ticket-hdr-time { padding: 0 8px; }
+    .ticket-hdr-room { padding: 3px 8px; min-width: 60px; }
+    .ticket-room-val { font-size: 16px; }
+    .ticket-room-lbl { font-size: 9px; }
+    .ticket-meta { font-size: 10px; }
+
+    .ticket-item { padding: 4px 8px; }
+    .ti-qty { font-size: 13px; min-width: 20px; }
+    .ti-name { font-size: 13px; }
+
+    .ticket-act-btn { padding: 8px 2px; font-size: 11px; }
+  }
+
+  @media (max-width: 480px) {
+    .bar-btn .bar-lbl { display: none; }
+    .bar-btn { width: calc(25% - 4px); padding: 10px 2px; }
+    .bar-btn .bar-icon { font-size: 20px; }
+
+    .picker-title { font-size: 32px; }
+    .picker-sub { font-size: 12px; margin-top: -16px; }
+    .picker-card { min-width: 140px; padding: 20px 24px; }
+    .picker-card-name { font-size: 22px; }
+  }
+
+  @media (max-width: 600px) {
+    .edit-modal {
+      width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      border-radius: 0;
+    }
+  }
+
+  /* ── Accessibility ── */
+  :focus-visible {
+    outline: 2px solid var(--bump);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1157,7 +1301,7 @@
       </div>
     </div>
     <div class="kds-grid-wrap">
-      <div class="kds-grid" id="kdsGrid">
+      <div class="kds-grid" id="kdsGrid" aria-live="polite">
         <div class="kds-empty">
           <div class="spinner"></div>
           <p class="kds-empty-sub">Loading orders…</p>
@@ -1167,43 +1311,46 @@
   </div>
 
   <div class="kds-bar">
-    <button class="bar-btn bump-btn" onclick="bumpSelected()">
+    <button class="bar-btn bump-btn" onclick="bumpSelected()" aria-label="Bump">
       <span class="bar-btn-tooltip"><strong>BUMP</strong> Advances the selected ticket one step along the status chain (New → Cooking → Ready → Served). It's the most-used button; in a real KDS you'd tap it constantly to move tickets forward.</span>
-      <span class="bar-icon">▶</span>BUMP
+      <span class="bar-icon">▶</span><span class="bar-lbl">BUMP</span>
     </button>
-    <button class="bar-btn cook-btn" onclick="advanceSelected('preparing')">
+    <button class="bar-btn cook-btn" onclick="advanceSelected('preparing')" aria-label="Cooking">
       <span class="bar-btn-tooltip"><strong>COOKING</strong> Jumps the selected ticket directly to "Preparing", regardless of current status. Useful if a ticket was accidentally skipped past.</span>
-      <span class="bar-icon">🍳</span>COOKING
+      <span class="bar-icon">🍳</span><span class="bar-lbl">COOKING</span>
     </button>
-    <button class="bar-btn" onclick="advanceSelected('ready')">
+    <button class="bar-btn" onclick="advanceSelected('ready')" aria-label="Ready">
       <span class="bar-btn-tooltip"><strong>READY</strong> Jumps directly to "Ready", signalling the pass that the order is plated and waiting for a runner.</span>
-      <span class="bar-icon">✓</span>READY
+      <span class="bar-icon">✓</span><span class="bar-lbl">READY</span>
     </button>
-    <button class="bar-btn" onclick="advanceSelected('served')">
+    <button class="bar-btn" onclick="advanceSelected('served')" aria-label="Served">
       <span class="bar-btn-tooltip"><strong>SERVED</strong> Marks the ticket as delivered to the room. It drops to the bottom of the grid and dims out.</span>
-      <span class="bar-icon">🚚</span>SERVED
+      <span class="bar-icon">🚚</span><span class="bar-lbl">SERVED</span>
     </button>
-    <button class="bar-btn info-btn" onclick="showOrderInfo()">
+    <button class="bar-btn info-btn" onclick="showOrderInfo()" aria-label="Info">
       <span class="bar-btn-tooltip"><strong>INFO</strong> Pops an alert with the full order details: order ID, room, party size, payment method, itemised prices, and any notes. Handy if a runner has a question.</span>
-      <span class="bar-icon">ℹ</span>INFO
+      <span class="bar-icon">ℹ</span><span class="bar-lbl">INFO</span>
     </button>
-    <button class="bar-btn info-btn" onclick="editSelected()">
+    <button class="bar-btn info-btn" onclick="editSelected()" aria-label="Edit">
       <span class="bar-btn-tooltip"><strong>EDIT</strong> Opens an editor for the selected ticket. You can change item quantities, remove items, add new items from the menu, and edit notes.</span>
-      <span class="bar-icon">✏</span>EDIT
+      <span class="bar-icon">✏</span><span class="bar-lbl">EDIT</span>
     </button>
-    <button class="bar-btn recall-btn" onclick="recallLast()">
+    <button class="bar-btn recall-btn" onclick="recallLast()" aria-label="Recall">
       <span class="bar-btn-tooltip"><strong>RECALL</strong> Puts the last ticket you marked as Served back to Ready. Covers the common mistake of bumping a ticket before the runner has actually left with it.</span>
-      <span class="bar-icon">↩</span>RECALL
+      <span class="bar-icon">↩</span><span class="bar-lbl">RECALL</span>
     </button>
   </div>
 
 </div>
 
+<!-- KDS Toast -->
+<div class="kds-toast" id="kdsToast" aria-live="polite"></div>
+
 <!-- ═══════════════════════════════════════
      EDIT MODAL
 ═══════════════════════════════════════ -->
 <div class="edit-overlay" id="editOverlay">
-  <div class="edit-modal">
+  <div class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
     <div class="edit-modal-hdr">
       <span class="edit-modal-title" id="editModalTitle">Edit Order</span>
       <button class="edit-modal-close" onclick="closeEditModal()">&times;</button>
@@ -1572,6 +1719,8 @@ async function advanceOrder(id, newStatus) {
     if (newStatus === 'served') S.lastBumped = updated;
     if (S.selectedId === id) S.selectedId = null;
     renderKDS();
+    const statusLabels = { preparing: 'Cooking', ready: 'Ready', served: 'Served' };
+    showKdsToast(`Order → ${statusLabels[newStatus] || newStatus}`);
   } catch (e) {
     if (card) card.style.opacity = '1';
   }
@@ -1604,7 +1753,11 @@ function advanceSelected(status) {
 
 function recallLast() {
   if (!S.lastBumped) return flashBar();
-  advanceOrder(S.lastBumped.id, 'ready').then(() => { S.lastBumped = null; });
+  if (!confirm('Recall last served order?')) return;
+  advanceOrder(S.lastBumped.id, 'ready').then(() => {
+    S.lastBumped = null;
+    showKdsToast('Order recalled');
+  });
 }
 
 function showOrderInfo() {
@@ -1619,16 +1772,18 @@ function showOrderInfo() {
 
 function flashBar() {
   const bar = document.querySelector('.kds-bar');
-  bar.style.background = '#2a1c0a';
-  setTimeout(() => { bar.style.background = ''; }, 500);
+  bar.style.background = '#4a2c0a';
+  bar.style.animation = 'barShake 0.35s ease-out';
+  setTimeout(() => { bar.style.background = ''; bar.style.animation = ''; }, 500);
 }
 
 // ─── Edit modal ───────────────────────────────────────────────────────────────
 const EditState = {
   orderId: null,
   originalOrder: null,
-  items: [],       // { id (existing item UUID | null), menu_item_id, name, unit_price, quantity, notes, isNew }
-  menuItems: [],   // full menu from API
+  items: [],
+  menuItems: [],
+  dirty: false,
 };
 
 function editSelected() {
@@ -1663,7 +1818,9 @@ async function openEditModal(id) {
 
   document.getElementById('editModalTitle').textContent =
     `Edit Order #${id.slice(0, 8).toUpperCase()} — Room ${order.room_id}`;
-  document.getElementById('editOrderNotes').value = order.notes || '';
+  const notesInput = document.getElementById('editOrderNotes');
+  notesInput.value = order.notes || '';
+  notesInput.oninput = () => { EditState.dirty = true; };
   document.getElementById('editSearchInput').value = '';
   document.getElementById('editSearchResults').classList.remove('open');
 
@@ -1678,14 +1835,19 @@ async function openEditModal(id) {
     }
   }
 
+  EditState.dirty = false;
   document.getElementById('editOverlay').classList.add('open');
+  trapKdsFocus(document.querySelector('.edit-modal'));
 }
 
 function closeEditModal() {
+  if (EditState.dirty && !confirm('Discard unsaved changes?')) return;
   document.getElementById('editOverlay').classList.remove('open');
+  releaseKdsFocus();
   EditState.orderId = null;
   EditState.originalOrder = null;
   EditState.items = [];
+  EditState.dirty = false;
   EditState._pendingMenuItem = null;
   EditState._pendingOptions = new Set();
 }
@@ -1727,15 +1889,17 @@ function editQty(idx, delta) {
   const it = EditState.items[idx];
   if (!it) return;
   it.quantity = Math.max(1, it.quantity + delta);
+  EditState.dirty = true;
   renderEditItems();
 }
 
 function editItemNote(idx, val) {
-  if (EditState.items[idx]) EditState.items[idx].notes = val;
+  if (EditState.items[idx]) { EditState.items[idx].notes = val; EditState.dirty = true; }
 }
 
 function removeEditItem(idx) {
   EditState.items.splice(idx, 1);
+  EditState.dirty = true;
   renderEditItems();
 }
 
@@ -1856,6 +2020,7 @@ function confirmAddWithOptions() {
 
 function addEditItemDirect(mi, selectedOptions) {
   const optDelta = selectedOptions.reduce((s, o) => s + Number(o.price_delta || 0), 0);
+  EditState.dirty = true;
 
   EditState.items.push({
     id: null,
@@ -1935,8 +2100,10 @@ async function saveEdit() {
     const updated = await res.json();
     const idx = S.orders.findIndex(o => o.id === EditState.orderId);
     if (idx !== -1) S.orders[idx] = updated;
+    EditState.dirty = false;
     closeEditModal();
     renderKDS();
+    showKdsToast('Order updated');
   } catch (e) {
     alert('Network error saving edit.');
   }
@@ -1946,11 +2113,94 @@ document.getElementById('editOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeEditModal();
 });
 
+// ─── Keyboard shortcuts ─────────────────────────────────────────────────────
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && document.getElementById('editOverlay').classList.contains('open')) {
-    closeEditModal();
+  if (document.getElementById('editOverlay').classList.contains('open')) {
+    if (e.key === 'Escape') closeEditModal();
+    return;
+  }
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); bumpSelected(); }
+  if (e.key === 'ArrowRight') selectAdjacentTicket(1);
+  if (e.key === 'ArrowLeft') selectAdjacentTicket(-1);
+  if (e.key === 'e' || e.key === 'E') editSelected();
+  if (e.key === 'r' || e.key === 'R') recallLast();
+  if (e.key === 'Escape') { S.selectedId = null; renderGrid(); }
+});
+
+function selectAdjacentTicket(dir) {
+  const STATUS_RANK = { received: 0, preparing: 1, ready: 2, served: 3 };
+  const sorted = [...S.orders].sort((a, b) => {
+    const sr = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+    return sr !== 0 ? sr : new Date(a.created_at) - new Date(b.created_at);
+  });
+  if (!sorted.length) return;
+  if (!S.selectedId) {
+    S.selectedId = sorted[0].id;
+  } else {
+    const idx = sorted.findIndex(o => o.id === S.selectedId);
+    const next = idx + dir;
+    if (next >= 0 && next < sorted.length) S.selectedId = sorted[next].id;
+  }
+  renderGrid();
+}
+
+// ─── KDS Toast ────────────────────────────────────────────────────────────────
+let kdsToastTimer;
+function showKdsToast(msg) {
+  const t = document.getElementById('kdsToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(kdsToastTimer);
+  kdsToastTimer = setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ─── Visibility pause ─────────────────────────────────────────────────────────
+document.addEventListener('visibilitychange', () => {
+  if (!S.restoId) return;
+  if (document.hidden) {
+    clearInterval(S.tickInterval);
+    clearInterval(S.elapsedInterval);
+  } else {
+    loadOrders();
+    S.countdown = REFRESH_SEC;
+    tickClock();
+    updateRing();
+    S.tickInterval = setInterval(() => {
+      tickClock();
+      S.countdown--;
+      updateRing();
+      if (S.countdown <= 0) {
+        loadOrders();
+        S.countdown = REFRESH_SEC;
+      }
+    }, 1000);
+    S.elapsedInterval = setInterval(refreshElapsed, 8000);
   }
 });
+
+// ─── Focus trap ───────────────────────────────────────────────────────────────
+let _kdsTrapHandler = null;
+function trapKdsFocus(container) {
+  releaseKdsFocus();
+  const focusable = () => container.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])');
+  _kdsTrapHandler = (e) => {
+    if (e.key !== 'Tab') return;
+    const els = focusable();
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  };
+  document.addEventListener('keydown', _kdsTrapHandler);
+  const els = focusable();
+  if (els.length) els[0].focus();
+}
+function releaseKdsFocus() {
+  if (_kdsTrapHandler) { document.removeEventListener('keydown', _kdsTrapHandler); _kdsTrapHandler = null; }
+}
 
 // ─── Init ──────────────────────────────────────────────────────────────────────
 loadRestaurants();
