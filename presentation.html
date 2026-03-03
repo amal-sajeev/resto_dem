@@ -1,0 +1,2472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hotel Multi-Restaurant Ordering System — Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080705;
+    --bg2: #110f0c;
+    --card: #1a1713;
+    --card2: #221e19;
+    --border: #302a23;
+    --gold: #c9a96e;
+    --gold-lt: #e8c98a;
+    --gold-dim: #7a6340;
+    --text: #f0ebe3;
+    --text-muted: #9d9184;
+    --text-dim: #4a443d;
+    --danger: #c0614a;
+    --success: #6aab7e;
+    --radius: 12px;
+    --radius-lg: 20px;
+
+    --kds-bg: #111210;
+    --kds-rail: #1a1c18;
+    --kds-rail-b: #252720;
+    --kds-card-bg: #fafaf8;
+    --kds-txt-dark: #1a1c18;
+    --kds-txt-mid: #6e6e66;
+    --kds-txt-light: #999990;
+    --s-new: #d42b2b;
+    --s-prep: #d47a00;
+    --s-ready: #1a8c3a;
+    --s-served: #555550;
+    --bump: #22c45a;
+    --cooking: #f5a623;
+    --info: #3a8fd4;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,169,110,0.06) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .deck {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 60px;
+    opacity: 0;
+    transform: translateX(80px);
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-80px);
+  }
+
+  /* Navigation */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 24px;
+    background: linear-gradient(to top, rgba(8,7,5,0.95) 60%, transparent);
+  }
+  .nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold-dim);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.25s;
+    padding: 0;
+  }
+  .nav-dot.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    transform: scale(1.3);
+  }
+  .nav-dot:hover { border-color: var(--gold); }
+  .slide-counter {
+    position: fixed;
+    bottom: 16px;
+    right: 24px;
+    z-index: 100;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+  .nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: rgba(26,23,19,0.8);
+    color: var(--gold-dim);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+  }
+  .nav-arrow:hover { border-color: var(--gold); color: var(--gold); background: rgba(26,23,19,0.95); }
+  .nav-arrow.prev { left: 16px; }
+  .nav-arrow.next { right: 16px; }
+  .nav-arrow:disabled { opacity: 0.2; cursor: default; }
+
+  /* Slide typography */
+  .slide-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .slide-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 300;
+    line-height: 1.1;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .slide-title em { font-style: italic; color: var(--gold); }
+  .slide-subtitle {
+    font-size: 17px;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  /* Tech badges */
+  .badge-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .badge {
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    background: var(--card);
+  }
+  .badge.gold { border-color: var(--gold-dim); color: var(--gold); }
+
+  /* Two-column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    width: 100%;
+    max-width: 1000px;
+    align-items: start;
+  }
+  .col-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 400;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .col-title em { color: var(--gold); font-style: italic; }
+  .pain-list, .solution-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .pain-list li, .solution-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .pain-list li .icon { color: var(--danger); font-size: 18px; flex-shrink: 0; }
+  .solution-list li .icon { color: var(--success); font-size: 18px; flex-shrink: 0; }
+
+  /* Mockup frame */
+  .mockup-frame {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    max-width: 420px;
+    width: 100%;
+    background: var(--bg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(201,169,110,0.05);
+    max-height: 70vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .mockup-frame.wide {
+    max-width: 900px;
+  }
+  .mockup-frame.kds {
+    background: var(--kds-bg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(34,196,90,0.05);
+  }
+  .mockup-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  /* SVG diagram container */
+  .diagram-wrap {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: center;
+  }
+  .diagram-wrap svg {
+    width: 100%;
+    height: auto;
+  }
+
+  /* Slide-specific */
+  .slide-content {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Metrics grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 32px;
+  }
+  .metric-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+  }
+  .metric-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Highlights list */
+  .highlights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 32px;
+  }
+  .highlight-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .highlight-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .highlight-card-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* Roadmap */
+  .roadmap-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .roadmap-item {
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 14px;
+    color: var(--text-muted);
+    background: var(--card);
+  }
+
+  /* ═══════════════════════════════════════
+     MOCKUP COMPONENTS — ROOM (Guest UI)
+  ═══════════════════════════════════════ */
+  .m-header-ghost {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 16px 16px 0;
+  }
+  .m-header-ghost .eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    font-weight: 500;
+  }
+  .m-header-ghost .room {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .m-hero {
+    padding: 12px 16px;
+    text-align: center;
+  }
+  .m-hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .m-hero-title em { font-style: italic; color: var(--gold); }
+  .m-section-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    padding: 0 16px;
+    margin-bottom: 8px;
+  }
+  .m-section-line {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold-dim), var(--gold), var(--gold-dim), transparent);
+    margin: 0 16px 8px;
+  }
+
+  /* Restaurant cards (mockup) */
+  .m-resto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 6px 16px 20px;
+  }
+  .m-resto-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .m-resto-card:hover { border-color: var(--gold-dim); }
+  .m-resto-img {
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    background: linear-gradient(135deg, var(--card2) 0%, var(--card) 100%);
+  }
+  .m-resto-info { padding: 10px 12px 12px; }
+  .m-resto-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .m-resto-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .m-resto-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--gold-dim);
+  }
+  .m-open-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+  }
+  .m-open-dot.closed { background: var(--text-dim); box-shadow: none; }
+
+  /* Menu mockup */
+  .m-menu-header {
+    padding: 12px 16px 0;
+    position: sticky;
+    top: 0;
+    background: linear-gradient(to bottom, var(--bg) 80%, transparent);
+    z-index: 5;
+  }
+  .m-menu-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .m-back {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .m-party-chip {
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    font-size: 11px;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .m-cart-btn {
+    background: var(--gold);
+    border: none;
+    border-radius: 100px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .m-cart-badge {
+    background: var(--bg);
+    color: var(--gold);
+    border-radius: 50%;
+    width: 16px; height: 16px;
+    font-size: 9px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .m-resto-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    padding: 0 16px;
+  }
+  .m-search {
+    width: calc(100% - 32px);
+    margin: 0 16px 8px;
+    padding: 7px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .m-cat-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 10px;
+    overflow-x: auto;
+  }
+  .m-cat-tab {
+    padding: 5px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+  .m-cat-tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg);
+  }
+
+  /* Menu items (mockup) */
+  .m-menu-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(48,42,35,0.5);
+    align-items: flex-start;
+  }
+  .m-item-img {
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: var(--card2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .m-item-info { flex: 1; min-width: 0; }
+  .m-item-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .m-item-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .m-item-allergens {
+    font-size: 10px;
+    color: var(--danger);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .m-item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .m-item-price {
+    font-family: 'Lora', serif;
+    font-size: 13px;
+    color: var(--gold);
+  }
+  .m-add-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--gold);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* Item detail mockup */
+  .m-detail-sheet {
+    background: var(--card);
+    border-radius: 14px 14px 0 0;
+    margin: 0 8px;
+    overflow: hidden;
+  }
+  .m-detail-img {
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(135deg, var(--card2), var(--card));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+  }
+  .m-detail-body { padding: 14px 16px; }
+  .m-detail-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .m-detail-price {
+    font-family: 'Lora', serif;
+    font-size: 16px;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .m-detail-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .m-detail-allergens {
+    font-size: 13px;
+    color: var(--danger);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .m-options-title {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .m-options-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .m-option-pill {
+    padding: 5px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .m-option-pill.checked {
+    border-color: var(--gold);
+    background: rgba(201,169,110,0.15);
+    color: var(--gold);
+  }
+  .m-special-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: inherit;
+    margin-bottom: 12px;
+  }
+  .m-qty-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .m-qty-label { font-size: 13px; color: var(--text-muted); }
+  .m-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .m-stepper-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--text);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .m-stepper-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    width: 40px;
+    text-align: center;
+    color: var(--gold);
+  }
+  .m-btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--gold);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--bg);
+    letter-spacing: 0.02em;
+  }
+
+  /* Cart / checkout mockup */
+  .m-cart-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(48,42,35,0.5);
+  }
+  .m-cart-item-info { flex: 1; min-width: 0; }
+  .m-cart-item-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .m-cart-item-opts {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .m-cart-item-price {
+    font-family: 'Lora', serif;
+    font-size: 14px;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  .m-qty-ctrl {
+    display: flex;
+    align-items: center;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .m-qty-ctrl-btn {
+    width: 28px; height: 28px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .m-qty-ctrl-val {
+    font-size: 12px;
+    width: 20px;
+    text-align: center;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .m-summary {
+    margin: 12px 16px;
+    padding: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .m-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Lora', serif;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 4px 0;
+  }
+  .m-summary-total {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    color: var(--text);
+    padding: 10px 0 0;
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+  }
+  .m-summary-total span:last-child { color: var(--gold); }
+  .m-pay-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    margin: 0 16px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+  }
+  .m-pay-option.selected { border-color: var(--gold); background: rgba(201,169,110,0.06); }
+  .m-pay-radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .m-pay-option.selected .m-pay-radio {
+    border-color: var(--gold);
+  }
+  .m-pay-option.selected .m-pay-radio::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+  .m-pay-text { flex: 1; }
+  .m-pay-label { font-weight: 500; font-size: 13px; }
+  .m-pay-desc { font-size: 11px; color: var(--text-muted); }
+  .m-pay-icon { font-size: 18px; }
+
+  /* Confirmation mockup */
+  .m-od-restaurant { padding: 16px 16px 4px; }
+  .m-od-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 4px;
+  }
+  .m-od-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    margin-bottom: 4px;
+  }
+  .m-od-ref {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .m-track-wrap {
+    margin: 16px;
+    padding: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    position: relative;
+  }
+  .m-track-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+  }
+  .m-status-track {
+    display: flex;
+    align-items: center;
+  }
+  .m-status-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+  .m-status-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .m-status-dot.done {
+    border-color: rgba(106,171,126,0.5);
+    background: rgba(106,171,126,0.1);
+    color: var(--success);
+  }
+  .m-status-dot.active {
+    border-color: var(--gold);
+    background: rgba(201,169,110,0.12);
+    box-shadow: 0 0 12px rgba(201,169,110,0.3);
+  }
+  .m-status-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .m-status-label.active { color: var(--gold); }
+  .m-status-label.done { color: rgba(106,171,126,0.7); }
+  .m-status-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 20px;
+    min-width: 8px;
+  }
+  .m-status-line.done { background: rgba(106,171,126,0.45); }
+  .m-status-line.active { background: linear-gradient(to right, rgba(106,171,126,0.45), rgba(201,169,110,0.4)); }
+  .m-meta-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 0 16px;
+    margin-bottom: 12px;
+  }
+  .m-meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .m-od-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(48,42,35,0.5);
+  }
+  .m-od-item-left { flex: 1; }
+  .m-od-item-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .m-od-item-qty { font-size: 10px; color: var(--text-muted); }
+  .m-od-item-price {
+    font-family: 'Lora', serif;
+    font-size: 13px;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  .m-od-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px 0;
+    border-top: 1px solid var(--border);
+    margin: 4px 16px 16px;
+  }
+  .m-od-total-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+  .m-od-total-val {
+    font-family: 'Lora', serif;
+    font-size: 18px;
+    color: var(--gold);
+  }
+
+  /* ═══════════════════════════════════════
+     MOCKUP COMPONENTS — KITCHEN (KDS)
+  ═══════════════════════════════════════ */
+  .mk-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    gap: 24px;
+  }
+  .mk-picker-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--kds-card-bg);
+  }
+  .mk-picker-title span { color: var(--bump); }
+  .mk-picker-sub {
+    font-size: 11px;
+    color: var(--kds-txt-light);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: -14px;
+  }
+  .mk-picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .mk-picker-card {
+    background: var(--kds-rail);
+    border: 2px solid var(--kds-rail-b);
+    border-radius: 6px;
+    padding: 16px 24px;
+    text-align: center;
+    min-width: 130px;
+  }
+  .mk-picker-card:hover { border-color: var(--bump); }
+  .mk-picker-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--kds-card-bg);
+    margin-bottom: 4px;
+  }
+  .mk-picker-card-hours {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--kds-txt-light);
+  }
+
+  /* KDS main view mockup */
+  .mk-kds {
+    display: flex;
+    flex-direction: column;
+    height: 420px;
+  }
+  .mk-header {
+    height: 40px;
+    background: var(--kds-rail);
+    border-bottom: 2px solid var(--kds-rail-b);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    flex-shrink: 0;
+  }
+  .mk-header-left { display: flex; align-items: center; gap: 8px; }
+  .mk-back {
+    background: none;
+    border: 1px solid var(--kds-rail-b);
+    border-radius: 3px;
+    color: var(--kds-txt-light);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+  .mk-resto-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--kds-card-bg);
+  }
+  .mk-header-center { display: flex; align-items: center; gap: 8px; }
+  .mk-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+    font-size: 10px;
+  }
+  .mk-stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .mk-stat-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .mk-stat-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--kds-txt-light);
+  }
+  .mk-stat.new { border-color: rgba(212,43,43,0.4); }
+  .mk-stat.new .mk-stat-dot { background: var(--s-new); box-shadow: 0 0 4px var(--s-new); }
+  .mk-stat.new .mk-stat-val { color: #ff4444; }
+  .mk-stat.prep { border-color: rgba(212,122,0,0.4); }
+  .mk-stat.prep .mk-stat-dot { background: var(--s-prep); box-shadow: 0 0 4px var(--s-prep); }
+  .mk-stat.prep .mk-stat-val { color: #f5a623; }
+  .mk-stat.ready { border-color: rgba(26,140,58,0.4); }
+  .mk-stat.ready .mk-stat-dot { background: var(--s-ready); box-shadow: 0 0 4px var(--s-ready); }
+  .mk-stat.ready .mk-stat-val { color: #22c45a; }
+  .mk-clock {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--kds-card-bg);
+  }
+
+  .mk-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+  .mk-rail {
+    width: 140px;
+    background: var(--kds-rail);
+    border-right: 2px solid var(--kds-rail-b);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .mk-rail-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--kds-txt-light);
+    padding: 8px 10px 6px;
+    border-bottom: 1px solid var(--kds-rail-b);
+  }
+  .mk-rail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(37,39,32,0.5);
+  }
+  .mk-rail-item-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--kds-card-bg);
+  }
+  .mk-rail-item-qty {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #f5a623;
+    background: rgba(212,122,0,0.12);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  .mk-grid-wrap {
+    flex: 1;
+    padding: 6px;
+    overflow-y: auto;
+  }
+  .mk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 6px;
+    align-content: start;
+  }
+
+  /* Ticket mockup */
+  .mk-ticket {
+    background: var(--kds-card-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  }
+  .mk-ticket-hdr {
+    display: flex;
+    align-items: stretch;
+    height: 34px;
+    flex-shrink: 0;
+  }
+  .mk-ticket-hdr.received { background: var(--s-new); }
+  .mk-ticket-hdr.preparing { background: var(--s-prep); }
+  .mk-ticket-hdr.ready { background: var(--s-ready); }
+  .mk-ticket-hdr-time {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 7px;
+  }
+  .mk-ticket-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1;
+  }
+  .mk-ticket-elapsed {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: rgba(255,255,255,0.7);
+  }
+  .mk-ticket-hdr-room {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 2px 7px;
+    border-left: 1px solid rgba(255,255,255,0.2);
+  }
+  .mk-ticket-room-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+  }
+  .mk-ticket-room-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .mk-ticket-body { padding: 3px 0 2px; }
+  .mk-ticket-item {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 3px 7px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .mk-ti-qty {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--kds-txt-dark);
+    min-width: 16px;
+  }
+  .mk-ti-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--kds-txt-dark);
+    line-height: 1.3;
+  }
+  .mk-ticket-notes {
+    background: #fff5f5;
+    border-top: 1.5px solid rgba(212,43,43,0.2);
+    padding: 4px 7px;
+    font-size: 9px;
+    color: var(--s-new);
+    line-height: 1.4;
+  }
+  .mk-ticket-notes-lbl {
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 1px;
+  }
+  .mk-ticket-actions {
+    display: flex;
+    border-top: 1px solid #e8e8e2;
+    flex-shrink: 0;
+  }
+  .mk-ticket-act-btn {
+    flex: 1;
+    border: none;
+    padding: 6px 2px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--kds-txt-mid);
+    border-right: 1px solid #e8e8e2;
+  }
+  .mk-ticket-act-btn:last-child { border-right: none; }
+  .mk-ticket-act-btn.primary { background: var(--s-new); color: #fff; }
+  .mk-ticket-act-btn.primary.prep-clr { background: var(--s-prep); color: #fff; }
+  .mk-ticket-act-btn.primary.ready-clr { background: var(--s-ready); color: #fff; }
+
+  /* Bottom bar mockup */
+  .mk-bar {
+    height: 44px;
+    background: #0e0f0c;
+    border-top: 2px solid var(--kds-rail-b);
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+    padding: 0 8px;
+  }
+  .mk-bar-btn {
+    flex: 1;
+    border: none;
+    border-right: 1px solid #1e1e18;
+    background: transparent;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .mk-bar-btn:last-child { border-right: none; }
+  .mk-bar-btn .bar-icon { font-size: 13px; }
+  .mk-bar-btn.bump-btn { color: var(--bump); background: rgba(34,196,90,0.07); }
+  .mk-bar-btn.cook-btn { color: var(--cooking); background: rgba(245,166,35,0.05); }
+  .mk-bar-btn.recall-btn { color: #d42b2b; background: rgba(212,43,43,0.05); }
+
+  /* API endpoint styles */
+  .api-group {
+    margin-bottom: 16px;
+  }
+  .api-group-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .api-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .api-method {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    min-width: 50px;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+  .api-method.get { background: rgba(34,196,90,0.15); color: var(--bump); }
+  .api-method.post { background: rgba(58,143,212,0.15); color: var(--info); }
+  .api-method.patch { background: rgba(245,166,35,0.15); color: var(--cooking); }
+  .api-method.put { background: rgba(201,169,110,0.15); color: var(--gold); }
+  .api-method.delete { background: rgba(212,43,43,0.15); color: var(--s-new); }
+  .api-path {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .api-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+<!-- ═══════════════════════════════════════
+     SLIDE 1 — TITLE
+═══════════════════════════════════════ -->
+<div class="slide active" data-slide="0">
+  <div class="slide-eyebrow">Capstone Project</div>
+  <h1 class="slide-title" style="font-size:clamp(36px,6vw,64px)">Hotel Multi-Restaurant<br><em>Ordering System</em></h1>
+  <p class="slide-subtitle">QR-based in-room dining for hotels. Guests scan, browse, order, and track &mdash; all from their phone.</p>
+  <div class="badge-row">
+    <span class="badge gold">FastAPI</span>
+    <span class="badge gold">PostgreSQL</span>
+    <span class="badge gold">Async SQLAlchemy</span>
+    <span class="badge">Vanilla JS</span>
+    <span class="badge">Pydantic</span>
+    <span class="badge">Jinja2</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 2 — PROBLEM & SOLUTION
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="1">
+  <div class="slide-eyebrow">Why This Project</div>
+  <h2 class="slide-title" style="margin-bottom:36px">The <em>Problem</em> &amp; Solution</h2>
+  <div class="two-col">
+    <div>
+      <div class="col-title">Traditional Room Service</div>
+      <ul class="pain-list">
+        <li><span class="icon">&#10007;</span> Phone calls to a busy front desk</li>
+        <li><span class="icon">&#10007;</span> Paper menus that go out of date</li>
+        <li><span class="icon">&#10007;</span> No visibility into order status</li>
+        <li><span class="icon">&#10007;</span> Single restaurant option only</li>
+        <li><span class="icon">&#10007;</span> Manual billing, error-prone</li>
+      </ul>
+    </div>
+    <div>
+      <div class="col-title">Our <em>Digital</em> Solution</div>
+      <ul class="solution-list">
+        <li><span class="icon">&#10003;</span> Scan QR in room, order instantly</li>
+        <li><span class="icon">&#10003;</span> Live digital menus, always current</li>
+        <li><span class="icon">&#10003;</span> Real-time status tracking per order</li>
+        <li><span class="icon">&#10003;</span> 7 restaurants, one seamless app</li>
+        <li><span class="icon">&#10003;</span> Room bill or pay now &mdash; guest's choice</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 3 — SYSTEM ARCHITECTURE
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="2">
+  <div class="slide-eyebrow">Architecture</div>
+  <h2 class="slide-title" style="margin-bottom:24px">System <em>Architecture</em></h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 380" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:850px">
+      <!-- Guest Phone -->
+      <rect x="30" y="120" width="160" height="140" rx="16" fill="#1a1713" stroke="#c9a96e" stroke-width="2"/>
+      <text x="110" y="160" text-anchor="middle" fill="#f0ebe3" font-family="Cormorant Garamond,serif" font-size="18" font-weight="500">Guest Phone</text>
+      <text x="110" y="185" text-anchor="middle" fill="#9d9184" font-family="DM Sans,sans-serif" font-size="12">room.html</text>
+      <text x="110" y="205" text-anchor="middle" fill="#7a6340" font-family="DM Sans,sans-serif" font-size="11">Mobile-first SPA</text>
+      <text x="110" y="225" text-anchor="middle" fill="#7a6340" font-family="DM Sans,sans-serif" font-size="11">Vanilla JS + CSS</text>
+      <text x="110" y="245" text-anchor="middle" fill="#4a443d" font-family="IBM Plex Mono,monospace" font-size="10">/room/{room_id}</text>
+
+      <!-- Arrows Guest -> Backend -->
+      <line x1="190" y1="175" x2="310" y2="175" stroke="#c9a96e" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <polygon points="308,170 318,175 308,180" fill="#c9a96e"/>
+      <text x="250" y="167" text-anchor="middle" fill="#7a6340" font-family="IBM Plex Mono,monospace" font-size="9">fetch()</text>
+      <line x1="310" y1="200" x2="190" y2="200" stroke="#c9a96e" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <polygon points="192,195 182,200 192,205" fill="#c9a96e"/>
+      <text x="250" y="218" text-anchor="middle" fill="#7a6340" font-family="IBM Plex Mono,monospace" font-size="9">JSON responses</text>
+
+      <!-- Backend -->
+      <rect x="320" y="80" width="260" height="220" rx="16" fill="#1a1713" stroke="#c9a96e" stroke-width="2"/>
+      <text x="450" y="115" text-anchor="middle" fill="#c9a96e" font-family="Barlow Condensed,sans-serif" font-size="20" font-weight="700" letter-spacing="0.06em">FASTAPI BACKEND</text>
+      <rect x="340" y="130" width="220" height="30" rx="6" fill="#221e19" stroke="#302a23" stroke-width="1"/>
+      <text x="450" y="150" text-anchor="middle" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">Pydantic Schemas</text>
+      <rect x="340" y="170" width="220" height="30" rx="6" fill="#221e19" stroke="#302a23" stroke-width="1"/>
+      <text x="450" y="190" text-anchor="middle" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">Async SQLAlchemy ORM</text>
+      <rect x="340" y="210" width="105" height="30" rx="6" fill="#221e19" stroke="#302a23" stroke-width="1"/>
+      <text x="392" y="230" text-anchor="middle" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">API Routers</text>
+      <rect x="455" y="210" width="105" height="30" rx="6" fill="#221e19" stroke="#302a23" stroke-width="1"/>
+      <text x="507" y="230" text-anchor="middle" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">Jinja2 Pages</text>
+      <text x="450" y="275" text-anchor="middle" fill="#4a443d" font-family="IBM Plex Mono,monospace" font-size="10">uvicorn &middot; asyncpg</text>
+
+      <!-- Arrow Backend -> DB -->
+      <line x1="580" y1="190" x2="680" y2="190" stroke="#6aab7e" stroke-width="1.5"/>
+      <polygon points="678,185 688,190 678,195" fill="#6aab7e"/>
+      <text x="630" y="182" text-anchor="middle" fill="#6aab7e" font-family="IBM Plex Mono,monospace" font-size="9">asyncpg</text>
+
+      <!-- Database -->
+      <ellipse cx="770" cy="170" rx="80" ry="22" fill="#1a1713" stroke="#6aab7e" stroke-width="2"/>
+      <rect x="690" y="170" width="160" height="60" fill="#1a1713" stroke="#6aab7e" stroke-width="2" stroke-dasharray="0,160,160,0,0,60,0,60"/>
+      <ellipse cx="770" cy="230" rx="80" ry="22" fill="#1a1713" stroke="#6aab7e" stroke-width="2"/>
+      <text x="770" y="175" text-anchor="middle" fill="#f0ebe3" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700">POSTGRESQL</text>
+      <text x="770" y="205" text-anchor="middle" fill="#6aab7e" font-family="IBM Plex Mono,monospace" font-size="10">7 tables</text>
+
+      <!-- Kitchen Display -->
+      <rect x="320" y="330" width="260" height="44" rx="10" fill="#1a1713" stroke="#22c45a" stroke-width="2"/>
+      <text x="450" y="357" text-anchor="middle" fill="#f0ebe3" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700">KITCHEN DISPLAY</text>
+      <text x="590" y="357" fill="#999990" font-family="IBM Plex Mono,monospace" font-size="10">kitchen.html</text>
+
+      <!-- Arrow KDS -> Backend -->
+      <line x1="450" y1="330" x2="450" y2="300" stroke="#22c45a" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <polygon points="445,302 450,292 455,302" fill="#22c45a"/>
+      <text x="490" y="318" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="9">poll 15s</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 4 — DATA MODEL
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="3">
+  <div class="slide-eyebrow">Database</div>
+  <h2 class="slide-title" style="margin-bottom:20px">Data <em>Model</em></h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 920 420" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:900px">
+      <!-- Restaurant -->
+      <rect x="20" y="20" width="200" height="140" rx="10" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+      <rect x="20" y="20" width="200" height="32" rx="10" fill="#c9a96e"/>
+      <rect x="20" y="42" width="200" height="10" fill="#c9a96e"/>
+      <text x="120" y="42" text-anchor="middle" fill="#080705" font-family="Barlow Condensed,sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">RESTAURANT</text>
+      <text x="34" y="76" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">id (UUID PK)</text>
+      <text x="34" y="93" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">name, description</text>
+      <text x="34" y="110" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">image_url</text>
+      <text x="34" y="127" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">open_from, open_until</text>
+
+      <!-- MenuItem -->
+      <rect x="20" y="200" width="200" height="160" rx="10" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+      <rect x="20" y="200" width="200" height="32" rx="10" fill="#c9a96e"/>
+      <rect x="20" y="222" width="200" height="10" fill="#c9a96e"/>
+      <text x="120" y="222" text-anchor="middle" fill="#080705" font-family="Barlow Condensed,sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">MENU ITEM</text>
+      <text x="34" y="256" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">id, restaurant_id (FK)</text>
+      <text x="34" y="273" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">name, description, price</text>
+      <text x="34" y="290" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">category, image_url</text>
+      <text x="34" y="307" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">allergens</text>
+      <text x="34" y="324" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">requires_option_selection</text>
+
+      <!-- MenuItemOption -->
+      <rect x="20" y="395" width="200" height="20" rx="6" fill="#1a1713" stroke="#7a6340" stroke-width="1"/>
+      <text x="120" y="410" text-anchor="middle" fill="#7a6340" font-family="IBM Plex Mono,monospace" font-size="10">MenuItemOption (id, label, price_delta)</text>
+
+      <!-- Room -->
+      <rect x="700" y="20" width="200" height="100" rx="10" fill="#1a1713" stroke="#6aab7e" stroke-width="1.5"/>
+      <rect x="700" y="20" width="200" height="32" rx="10" fill="#6aab7e"/>
+      <rect x="700" y="42" width="200" height="10" fill="#6aab7e"/>
+      <text x="800" y="42" text-anchor="middle" fill="#080705" font-family="Barlow Condensed,sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">ROOM</text>
+      <text x="714" y="76" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">id (UUID PK)</text>
+      <text x="714" y="93" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">room_number, display_name</text>
+
+      <!-- Order -->
+      <rect x="380" y="20" width="260" height="180" rx="10" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+      <rect x="380" y="20" width="260" height="32" rx="10" fill="#c9a96e"/>
+      <rect x="380" y="42" width="260" height="10" fill="#c9a96e"/>
+      <text x="510" y="42" text-anchor="middle" fill="#080705" font-family="Barlow Condensed,sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">ORDER</text>
+      <text x="394" y="76" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">id (UUID PK)</text>
+      <text x="394" y="93" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">restaurant_id (FK), room_id</text>
+      <text x="394" y="110" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">party_size, subtotal</text>
+      <text x="394" y="127" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">payment: room_bill | pay_now</text>
+      <text x="394" y="144" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">status: received | preparing</text>
+      <text x="394" y="161" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">        | ready | served</text>
+      <text x="394" y="178" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">notes, created_at</text>
+
+      <!-- OrderItem -->
+      <rect x="380" y="240" width="260" height="120" rx="10" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+      <rect x="380" y="240" width="260" height="32" rx="10" fill="#c9a96e"/>
+      <rect x="380" y="262" width="260" height="10" fill="#c9a96e"/>
+      <text x="510" y="262" text-anchor="middle" fill="#080705" font-family="Barlow Condensed,sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">ORDER ITEM</text>
+      <text x="394" y="296" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">id, order_id (FK)</text>
+      <text x="394" y="313" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">menu_item_id (FK)</text>
+      <text x="394" y="330" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">name, unit_price, quantity</text>
+      <text x="394" y="347" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="10">notes</text>
+
+      <!-- OrderItemOption -->
+      <rect x="380" y="395" width="260" height="20" rx="6" fill="#1a1713" stroke="#7a6340" stroke-width="1"/>
+      <text x="510" y="410" text-anchor="middle" fill="#7a6340" font-family="IBM Plex Mono,monospace" font-size="10">OrderItemOption (id, order_item_id FK, option_id FK)</text>
+
+      <!-- Relationship lines -->
+      <!-- Restaurant -> MenuItem (1:N) -->
+      <line x1="120" y1="160" x2="120" y2="200" stroke="#c9a96e" stroke-width="1.5"/>
+      <text x="128" y="183" fill="#c9a96e" font-family="IBM Plex Mono,monospace" font-size="9">1:N</text>
+      <!-- MenuItem -> MenuItemOption (1:N) -->
+      <line x1="120" y1="360" x2="120" y2="395" stroke="#7a6340" stroke-width="1"/>
+      <text x="128" y="380" fill="#7a6340" font-family="IBM Plex Mono,monospace" font-size="9">1:N</text>
+      <!-- Restaurant -> Order -->
+      <line x1="220" y1="90" x2="380" y2="90" stroke="#c9a96e" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="300" y="84" fill="#c9a96e" font-family="IBM Plex Mono,monospace" font-size="9">1:N</text>
+      <!-- Order -> OrderItem (1:N) -->
+      <line x1="510" y1="200" x2="510" y2="240" stroke="#c9a96e" stroke-width="1.5"/>
+      <text x="518" y="223" fill="#c9a96e" font-family="IBM Plex Mono,monospace" font-size="9">1:N</text>
+      <!-- OrderItem -> OrderItemOption -->
+      <line x1="510" y1="360" x2="510" y2="395" stroke="#7a6340" stroke-width="1"/>
+      <text x="518" y="380" fill="#7a6340" font-family="IBM Plex Mono,monospace" font-size="9">1:N</text>
+      <!-- Room -> Order -->
+      <line x1="700" y1="90" x2="640" y2="90" stroke="#6aab7e" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="670" y="84" fill="#6aab7e" font-family="IBM Plex Mono,monospace" font-size="9">1:N</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 5 — GUEST FLOW
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="4">
+  <div class="slide-eyebrow">User Journey</div>
+  <h2 class="slide-title" style="margin-bottom:28px">Guest <em>Flow</em></h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 920 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:900px">
+      <!-- Steps -->
+      <g transform="translate(10,20)">
+        <!-- Step 1 -->
+        <rect x="0" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+        <text x="45" y="68" text-anchor="middle" font-size="28">&#128247;</text>
+        <text x="45" y="100" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="11" font-weight="500">QR Scan</text>
+        <line x1="90" y1="75" x2="108" y2="75" stroke="#c9a96e" stroke-width="1.5"/>
+        <polygon points="106,71 114,75 106,79" fill="#c9a96e"/>
+
+        <!-- Step 2 -->
+        <rect x="116" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+        <text x="161" y="68" text-anchor="middle" font-size="28">&#127960;</text>
+        <text x="161" y="92" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Pick</text>
+        <text x="161" y="106" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Restaurant</text>
+        <line x1="206" y1="75" x2="224" y2="75" stroke="#c9a96e" stroke-width="1.5"/>
+        <polygon points="222,71 230,75 222,79" fill="#c9a96e"/>
+
+        <!-- Step 3 -->
+        <rect x="232" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+        <text x="277" y="68" text-anchor="middle" font-size="28">&#128101;</text>
+        <text x="277" y="92" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Party</text>
+        <text x="277" y="106" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Size</text>
+        <line x1="322" y1="75" x2="340" y2="75" stroke="#c9a96e" stroke-width="1.5"/>
+        <polygon points="338,71 346,75 338,79" fill="#c9a96e"/>
+
+        <!-- Step 4 -->
+        <rect x="348" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+        <text x="393" y="68" text-anchor="middle" font-size="28">&#128196;</text>
+        <text x="393" y="92" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Browse</text>
+        <text x="393" y="106" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Menu</text>
+        <line x1="438" y1="75" x2="456" y2="75" stroke="#c9a96e" stroke-width="1.5"/>
+        <polygon points="454,71 462,75 454,79" fill="#c9a96e"/>
+
+        <!-- Step 5 -->
+        <rect x="464" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+        <text x="509" y="68" text-anchor="middle" font-size="28">&#128722;</text>
+        <text x="509" y="92" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Add to</text>
+        <text x="509" y="106" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Cart</text>
+        <line x1="554" y1="75" x2="572" y2="75" stroke="#c9a96e" stroke-width="1.5"/>
+        <polygon points="570,71 578,75 570,79" fill="#c9a96e"/>
+
+        <!-- Step 6 -->
+        <rect x="580" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#c9a96e" stroke-width="1.5"/>
+        <text x="625" y="68" text-anchor="middle" font-size="28">&#128179;</text>
+        <text x="625" y="100" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="11" font-weight="500">Checkout</text>
+        <line x1="670" y1="75" x2="688" y2="75" stroke="#c9a96e" stroke-width="1.5"/>
+        <polygon points="686,71 694,75 686,79" fill="#c9a96e"/>
+
+        <!-- Step 7 -->
+        <rect x="696" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#22c45a" stroke-width="2"/>
+        <text x="741" y="68" text-anchor="middle" font-size="28">&#9989;</text>
+        <text x="741" y="92" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Order</text>
+        <text x="741" y="106" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Confirmed</text>
+        <line x1="786" y1="75" x2="804" y2="75" stroke="#22c45a" stroke-width="1.5"/>
+        <polygon points="802,71 810,75 802,79" fill="#22c45a"/>
+
+        <!-- Step 8 -->
+        <rect x="812" y="30" width="90" height="90" rx="12" fill="#1a1713" stroke="#22c45a" stroke-width="2"/>
+        <text x="857" y="68" text-anchor="middle" font-size="28">&#128230;</text>
+        <text x="857" y="92" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Track</text>
+        <text x="857" y="106" text-anchor="middle" fill="#f0ebe3" font-family="DM Sans,sans-serif" font-size="10" font-weight="500">Status</text>
+      </g>
+
+      <!-- Bottom label -->
+      <text x="460" y="175" text-anchor="middle" fill="#4a443d" font-family="IBM Plex Mono,monospace" font-size="11">Received &#8594; Preparing &#8594; On the way &#8594; Served</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 6 — MOCKUP: RESTAURANT SELECTION
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="5">
+  <div class="slide-eyebrow">Guest UI</div>
+  <h2 class="slide-title" style="margin-bottom:8px">Restaurant <em>Selection</em></h2>
+  <p class="mockup-label">room.html &mdash; Restaurants View</p>
+  <div class="mockup-frame">
+    <div class="m-header-ghost">
+      <span class="eyebrow">Hotel Ordering</span>
+      <span class="room">Room 305</span>
+    </div>
+    <div class="m-hero">
+      <h2 class="m-hero-title">Good evening,<br>where shall we <em>dine?</em></h2>
+    </div>
+    <div class="m-section-line"></div>
+    <div class="m-section-label">Our Restaurants</div>
+    <div class="m-resto-grid">
+      <div class="m-resto-card">
+        <div class="m-resto-img">&#127869;</div>
+        <div class="m-resto-info">
+          <div class="m-resto-name">Main Restaurant</div>
+          <div class="m-resto-desc">All-day dining with international cuisine</div>
+          <div class="m-resto-meta"><span class="m-open-dot"></span> 7:00 &ndash; 22:00</div>
+        </div>
+      </div>
+      <div class="m-resto-card">
+        <div class="m-resto-img">&#127843;</div>
+        <div class="m-resto-info">
+          <div class="m-resto-name">Sushi Bar</div>
+          <div class="m-resto-desc">Authentic Japanese cuisine &amp; fresh sashimi</div>
+          <div class="m-resto-meta"><span class="m-open-dot"></span> 11:30 &ndash; 22:00</div>
+        </div>
+      </div>
+      <div class="m-resto-card">
+        <div class="m-resto-img">&#127958;</div>
+        <div class="m-resto-info">
+          <div class="m-resto-name">Pool Grill</div>
+          <div class="m-resto-desc">Casual poolside bites &amp; cold drinks</div>
+          <div class="m-resto-meta"><span class="m-open-dot closed"></span> 10:00 &ndash; 18:00</div>
+        </div>
+      </div>
+      <div class="m-resto-card">
+        <div class="m-resto-img">&#127865;</div>
+        <div class="m-resto-info">
+          <div class="m-resto-name">Rooftop Lounge</div>
+          <div class="m-resto-desc">Craft cocktails &amp; small plates</div>
+          <div class="m-resto-meta"><span class="m-open-dot"></span> 16:00 &ndash; 23:30</div>
+        </div>
+      </div>
+      <div class="m-resto-card">
+        <div class="m-resto-img">&#127798;</div>
+        <div class="m-resto-info">
+          <div class="m-resto-name">Breakfast &amp; Co</div>
+          <div class="m-resto-desc">Start your morning right</div>
+          <div class="m-resto-meta"><span class="m-open-dot closed"></span> 6:00 &ndash; 11:00</div>
+        </div>
+      </div>
+      <div class="m-resto-card">
+        <div class="m-resto-img">&#129385;</div>
+        <div class="m-resto-info">
+          <div class="m-resto-name">The Steakhouse</div>
+          <div class="m-resto-desc">Premium cuts, aged &amp; grilled</div>
+          <div class="m-resto-meta"><span class="m-open-dot"></span> 18:00 &ndash; 22:30</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 7 — MOCKUP: MENU BROWSING
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="6">
+  <div class="slide-eyebrow">Guest UI</div>
+  <h2 class="slide-title" style="margin-bottom:8px">Menu <em>Browsing</em></h2>
+  <p class="mockup-label">Category tabs, search, item cards with allergens &amp; pricing</p>
+  <div class="mockup-frame">
+    <div class="m-menu-header">
+      <div class="m-menu-header-top">
+        <span class="m-back">&#8592; Back</span>
+        <span class="m-party-chip">&#128100; 2 guests</span>
+        <span class="m-cart-btn">&#128722; Cart <span class="m-cart-badge">3</span></span>
+      </div>
+    </div>
+    <div class="m-resto-title">Main Restaurant</div>
+    <input class="m-search" type="text" value="Search menu..." disabled />
+    <div class="m-cat-tabs">
+      <span class="m-cat-tab active">Starters</span>
+      <span class="m-cat-tab">Mains</span>
+      <span class="m-cat-tab">Desserts</span>
+      <span class="m-cat-tab">Drinks</span>
+      <span class="m-cat-tab">Sides</span>
+    </div>
+    <div class="m-menu-item">
+      <div class="m-item-img">&#129388;</div>
+      <div class="m-item-info">
+        <div class="m-item-name">Caesar Salad</div>
+        <div class="m-item-desc">Romaine, parmesan, croutons, classic dressing</div>
+        <div class="m-item-allergens">Dairy, Gluten, Eggs</div>
+        <div class="m-item-footer">
+          <span class="m-item-price">$14.00</span>
+          <span class="m-add-btn">+</span>
+        </div>
+      </div>
+    </div>
+    <div class="m-menu-item">
+      <div class="m-item-img">&#129367;</div>
+      <div class="m-item-info">
+        <div class="m-item-name">Bruschetta Trio</div>
+        <div class="m-item-desc">Tomato basil, mushroom truffle, ricotta honey</div>
+        <div class="m-item-allergens">Gluten, Dairy</div>
+        <div class="m-item-footer">
+          <span class="m-item-price">$12.00</span>
+          <span class="m-add-btn">+</span>
+        </div>
+      </div>
+    </div>
+    <div class="m-menu-item">
+      <div class="m-item-img">&#127830;</div>
+      <div class="m-item-info">
+        <div class="m-item-name">Grilled Salmon</div>
+        <div class="m-item-desc">Atlantic salmon, lemon butter, seasonal vegetables</div>
+        <div class="m-item-allergens">Fish</div>
+        <div class="m-item-footer">
+          <span class="m-item-price">$28.00</span>
+          <span class="m-add-btn">+</span>
+        </div>
+      </div>
+    </div>
+    <div class="m-menu-item">
+      <div class="m-item-img">&#127831;</div>
+      <div class="m-item-info">
+        <div class="m-item-name">Margherita Pizza</div>
+        <div class="m-item-desc">San Marzano tomato, mozzarella, fresh basil</div>
+        <div class="m-item-allergens">Gluten, Dairy</div>
+        <div class="m-item-footer">
+          <span class="m-item-price">$18.00</span>
+          <span class="m-add-btn">+</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 8 — MOCKUP: ITEM DETAIL
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="7">
+  <div class="slide-eyebrow">Guest UI</div>
+  <h2 class="slide-title" style="margin-bottom:8px">Item Detail &amp; <em>Options</em></h2>
+  <p class="mockup-label">Bottom sheet with options, allergens, quantity stepper</p>
+  <div class="mockup-frame">
+    <div style="padding:16px 16px 8px; opacity:0.3; pointer-events:none">
+      <div class="m-menu-item" style="border:none;padding:4px 0">
+        <div class="m-item-img" style="opacity:0.5">&#129388;</div>
+        <div class="m-item-info"><div class="m-item-name" style="opacity:0.5">Caesar Salad</div></div>
+      </div>
+    </div>
+    <div class="m-detail-sheet">
+      <div class="m-detail-img">&#127831;</div>
+      <div class="m-detail-body">
+        <div class="m-detail-name">Margherita Pizza</div>
+        <div class="m-detail-price">$18.00</div>
+        <div class="m-detail-desc">San Marzano tomato, fresh mozzarella, basil leaves, extra virgin olive oil on a hand-stretched dough.</div>
+        <div class="m-detail-allergens">Allergens: Gluten, Dairy</div>
+        <div class="m-options-title">Add toppings (optional)</div>
+        <div class="m-options-row">
+          <span class="m-option-pill checked">Pepperoni +$3</span>
+          <span class="m-option-pill">Mushrooms +$2</span>
+          <span class="m-option-pill">Olives +$2</span>
+          <span class="m-option-pill checked">Extra Cheese +$2</span>
+        </div>
+        <input class="m-special-input" type="text" value="Extra crispy, please" disabled />
+        <div class="m-qty-row">
+          <span class="m-qty-label">Quantity</span>
+          <div class="m-stepper">
+            <span class="m-stepper-btn">&minus;</span>
+            <span class="m-stepper-val">2</span>
+            <span class="m-stepper-btn">+</span>
+          </div>
+        </div>
+        <button class="m-btn-primary">Add to Cart &mdash; $46.00</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 9 — MOCKUP: CART & CHECKOUT
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="8">
+  <div class="slide-eyebrow">Guest UI</div>
+  <h2 class="slide-title" style="margin-bottom:8px">Cart &amp; <em>Checkout</em></h2>
+  <p class="mockup-label">Order summary, payment selection, place order</p>
+  <div class="mockup-frame">
+    <div style="padding:12px 16px 0; display:flex; align-items:center; justify-content:space-between">
+      <span class="m-back">&#8592; Back</span>
+      <span style="background:var(--card2);border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:12px;color:var(--gold)">Room 305</span>
+    </div>
+    <div style="padding:12px 16px 4px">
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300">Your <em style="color:var(--gold);font-style:italic">order</em></h2>
+    </div>
+    <div class="m-cart-item">
+      <div class="m-cart-item-info">
+        <div class="m-cart-item-name">Margherita Pizza</div>
+        <div class="m-cart-item-opts">+ Pepperoni, Extra Cheese</div>
+      </div>
+      <div class="m-qty-ctrl">
+        <span class="m-qty-ctrl-btn">&minus;</span>
+        <span class="m-qty-ctrl-val">2</span>
+        <span class="m-qty-ctrl-btn">+</span>
+      </div>
+      <span class="m-cart-item-price">$46.00</span>
+    </div>
+    <div class="m-cart-item">
+      <div class="m-cart-item-info">
+        <div class="m-cart-item-name">Caesar Salad</div>
+      </div>
+      <div class="m-qty-ctrl">
+        <span class="m-qty-ctrl-btn">&minus;</span>
+        <span class="m-qty-ctrl-val">1</span>
+        <span class="m-qty-ctrl-btn">+</span>
+      </div>
+      <span class="m-cart-item-price">$14.00</span>
+    </div>
+    <div class="m-cart-item">
+      <div class="m-cart-item-info">
+        <div class="m-cart-item-name">Sparkling Water</div>
+      </div>
+      <div class="m-qty-ctrl">
+        <span class="m-qty-ctrl-btn">&minus;</span>
+        <span class="m-qty-ctrl-val">2</span>
+        <span class="m-qty-ctrl-btn">+</span>
+      </div>
+      <span class="m-cart-item-price">$10.00</span>
+    </div>
+    <div class="m-summary">
+      <div class="m-summary-row"><span>Subtotal</span><span>$70.00</span></div>
+      <div class="m-summary-total"><span>Total</span><span>$70.00</span></div>
+    </div>
+    <div class="m-pay-option selected">
+      <span class="m-pay-radio"></span>
+      <div class="m-pay-text">
+        <div class="m-pay-label">Add to room bill</div>
+        <div class="m-pay-desc">Charge to Room 305</div>
+      </div>
+      <span class="m-pay-icon">&#127975;</span>
+    </div>
+    <div class="m-pay-option">
+      <span class="m-pay-radio"></span>
+      <div class="m-pay-text">
+        <div class="m-pay-label">Pay now</div>
+        <div class="m-pay-desc">Card or cash at delivery</div>
+      </div>
+      <span class="m-pay-icon">&#128179;</span>
+    </div>
+    <div style="padding:0 16px 20px">
+      <button class="m-btn-primary">Place Order &mdash; $70.00</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 10 — MOCKUP: ORDER CONFIRMATION
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="9">
+  <div class="slide-eyebrow">Guest UI</div>
+  <h2 class="slide-title" style="margin-bottom:8px">Order <em>Confirmation</em></h2>
+  <p class="mockup-label">Status tracking with real-time polling every 20 seconds</p>
+  <div class="mockup-frame">
+    <div style="padding:12px 16px 0; display:flex; align-items:center; justify-content:space-between">
+      <span class="m-back">&#8592; Restaurants</span>
+      <span style="background:var(--card2);border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:12px;color:var(--gold)">Room 305</span>
+    </div>
+    <div class="m-od-restaurant">
+      <div class="m-od-eyebrow">Order Placed</div>
+      <div class="m-od-title">Main Restaurant</div>
+      <div class="m-od-ref">Ref #a3f8..c4e2</div>
+    </div>
+    <div class="m-track-wrap">
+      <div class="m-status-track">
+        <div class="m-status-step">
+          <div class="m-status-dot done">&#10003;</div>
+          <div class="m-status-label done">Received</div>
+        </div>
+        <div class="m-status-line done"></div>
+        <div class="m-status-step">
+          <div class="m-status-dot active">&#127859;</div>
+          <div class="m-status-label active">Preparing</div>
+        </div>
+        <div class="m-status-line active"></div>
+        <div class="m-status-step">
+          <div class="m-status-dot">&#128666;</div>
+          <div class="m-status-label">On the way</div>
+        </div>
+        <div class="m-status-line"></div>
+        <div class="m-status-step">
+          <div class="m-status-dot">&#127869;</div>
+          <div class="m-status-label">Served</div>
+        </div>
+      </div>
+    </div>
+    <div class="m-meta-row">
+      <span class="m-meta-chip">&#128100; 2 guests</span>
+      <span class="m-meta-chip">&#127975; Room bill</span>
+      <span class="m-meta-chip">&#128336; 2:15 PM</span>
+    </div>
+    <div style="padding:0 16px"><div class="m-od-eyebrow" style="margin-bottom:8px">Items</div></div>
+    <div class="m-od-item">
+      <div class="m-od-item-left">
+        <div class="m-od-item-name">Margherita Pizza</div>
+        <div class="m-od-item-qty">Qty: 2 &middot; + Pepperoni, Extra Cheese</div>
+      </div>
+      <span class="m-od-item-price">$46.00</span>
+    </div>
+    <div class="m-od-item">
+      <div class="m-od-item-left">
+        <div class="m-od-item-name">Caesar Salad</div>
+        <div class="m-od-item-qty">Qty: 1</div>
+      </div>
+      <span class="m-od-item-price">$14.00</span>
+    </div>
+    <div class="m-od-item">
+      <div class="m-od-item-left">
+        <div class="m-od-item-name">Sparkling Water</div>
+        <div class="m-od-item-qty">Qty: 2</div>
+      </div>
+      <span class="m-od-item-price">$10.00</span>
+    </div>
+    <div class="m-od-total">
+      <span class="m-od-total-label">Total</span>
+      <span class="m-od-total-val">$70.00</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 11 — MOCKUP: KITCHEN PICKER
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="10">
+  <div class="slide-eyebrow">Kitchen UI</div>
+  <h2 class="slide-title" style="margin-bottom:8px">Kitchen Display <em>System</em></h2>
+  <p class="mockup-label">kitchen.html &mdash; Station Picker</p>
+  <div class="mockup-frame wide kds">
+    <div class="mk-picker">
+      <div class="mk-picker-title">Kitchen <span>Display</span></div>
+      <div class="mk-picker-sub">Select your station</div>
+      <div class="mk-picker-grid">
+        <div class="mk-picker-card">
+          <div class="mk-picker-card-name">Main Restaurant</div>
+          <div class="mk-picker-card-hours">07:00 &ndash; 22:00</div>
+        </div>
+        <div class="mk-picker-card">
+          <div class="mk-picker-card-name">Sushi Bar</div>
+          <div class="mk-picker-card-hours">11:30 &ndash; 22:00</div>
+        </div>
+        <div class="mk-picker-card">
+          <div class="mk-picker-card-name">Pool Grill</div>
+          <div class="mk-picker-card-hours">10:00 &ndash; 18:00</div>
+        </div>
+        <div class="mk-picker-card">
+          <div class="mk-picker-card-name">Rooftop Lounge</div>
+          <div class="mk-picker-card-hours">16:00 &ndash; 23:30</div>
+        </div>
+        <div class="mk-picker-card">
+          <div class="mk-picker-card-name">The Steakhouse</div>
+          <div class="mk-picker-card-hours">18:00 &ndash; 22:30</div>
+        </div>
+        <div class="mk-picker-card">
+          <div class="mk-picker-card-name">Lobby Bar</div>
+          <div class="mk-picker-card-hours">06:00 &ndash; 23:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 12 — MOCKUP: KITCHEN TICKET GRID
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="11">
+  <div class="slide-eyebrow">Kitchen UI</div>
+  <h2 class="slide-title" style="margin-bottom:8px">Kitchen <em>Tickets</em></h2>
+  <p class="mockup-label">Header &middot; Left Rail &middot; Ticket Grid &middot; Action Bar</p>
+  <div class="mockup-frame wide kds">
+    <div class="mk-kds">
+      <!-- Header -->
+      <div class="mk-header">
+        <div class="mk-header-left">
+          <span class="mk-back">&#8592; ESC</span>
+          <span class="mk-resto-name">Main Restaurant</span>
+        </div>
+        <div class="mk-header-center">
+          <div class="mk-stat new">
+            <span class="mk-stat-dot"></span>
+            <span class="mk-stat-val">3</span>
+            <span class="mk-stat-lbl">New</span>
+          </div>
+          <div class="mk-stat prep">
+            <span class="mk-stat-dot"></span>
+            <span class="mk-stat-val">2</span>
+            <span class="mk-stat-lbl">Cooking</span>
+          </div>
+          <div class="mk-stat ready">
+            <span class="mk-stat-dot"></span>
+            <span class="mk-stat-val">1</span>
+            <span class="mk-stat-lbl">Ready</span>
+          </div>
+        </div>
+        <span class="mk-clock">14:32</span>
+      </div>
+      <!-- Body -->
+      <div class="mk-body">
+        <!-- Left Rail -->
+        <div class="mk-rail">
+          <div class="mk-rail-title">Items &middot; Active</div>
+          <div class="mk-rail-item"><span class="mk-rail-item-name">Caesar Salad</span><span class="mk-rail-item-qty">3</span></div>
+          <div class="mk-rail-item"><span class="mk-rail-item-name">Grilled Salmon</span><span class="mk-rail-item-qty">2</span></div>
+          <div class="mk-rail-item"><span class="mk-rail-item-name">Margherita Pizza</span><span class="mk-rail-item-qty">4</span></div>
+          <div class="mk-rail-item"><span class="mk-rail-item-name">Bruschetta</span><span class="mk-rail-item-qty">2</span></div>
+          <div class="mk-rail-item"><span class="mk-rail-item-name">Tiramisu</span><span class="mk-rail-item-qty">1</span></div>
+          <div class="mk-rail-item"><span class="mk-rail-item-name">Sparkling Water</span><span class="mk-rail-item-qty">3</span></div>
+        </div>
+        <!-- Grid -->
+        <div class="mk-grid-wrap">
+          <div class="mk-grid">
+            <!-- Ticket 1 - Received -->
+            <div class="mk-ticket">
+              <div class="mk-ticket-hdr received">
+                <div class="mk-ticket-hdr-time">
+                  <span class="mk-ticket-time">14:28</span>
+                  <span class="mk-ticket-elapsed">4m ago</span>
+                </div>
+                <div class="mk-ticket-hdr-room">
+                  <span class="mk-ticket-room-lbl">Room</span>
+                  <span class="mk-ticket-room-val">305</span>
+                </div>
+              </div>
+              <div class="mk-ticket-body">
+                <div class="mk-ticket-item"><span class="mk-ti-qty">2x</span><span class="mk-ti-name">Margherita Pizza</span></div>
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Caesar Salad</span></div>
+                <div class="mk-ticket-item"><span class="mk-ti-qty">2x</span><span class="mk-ti-name">Sparkling Water</span></div>
+              </div>
+              <div class="mk-ticket-actions">
+                <button class="mk-ticket-act-btn primary">Start Cooking</button>
+                <button class="mk-ticket-act-btn" style="font-size:8px;color:var(--kds-txt-light)">Edit</button>
+              </div>
+            </div>
+            <!-- Ticket 2 - Preparing -->
+            <div class="mk-ticket">
+              <div class="mk-ticket-hdr preparing">
+                <div class="mk-ticket-hdr-time">
+                  <span class="mk-ticket-time">14:22</span>
+                  <span class="mk-ticket-elapsed">10m ago</span>
+                </div>
+                <div class="mk-ticket-hdr-room">
+                  <span class="mk-ticket-room-lbl">Room</span>
+                  <span class="mk-ticket-room-val">201</span>
+                </div>
+              </div>
+              <div class="mk-ticket-body">
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Grilled Salmon</span></div>
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Bruschetta Trio</span></div>
+              </div>
+              <div class="mk-ticket-notes">
+                <span class="mk-ticket-notes-lbl">Notes</span>
+                Guest has a nut allergy
+              </div>
+              <div class="mk-ticket-actions">
+                <button class="mk-ticket-act-btn primary prep-clr">Mark Ready</button>
+                <button class="mk-ticket-act-btn" style="font-size:8px;color:var(--kds-txt-light)">Edit</button>
+              </div>
+            </div>
+            <!-- Ticket 3 - Ready -->
+            <div class="mk-ticket">
+              <div class="mk-ticket-hdr ready">
+                <div class="mk-ticket-hdr-time">
+                  <span class="mk-ticket-time">14:15</span>
+                  <span class="mk-ticket-elapsed">17m ago</span>
+                </div>
+                <div class="mk-ticket-hdr-room">
+                  <span class="mk-ticket-room-lbl">Room</span>
+                  <span class="mk-ticket-room-val">408</span>
+                </div>
+              </div>
+              <div class="mk-ticket-body">
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Tiramisu</span></div>
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Sparkling Water</span></div>
+              </div>
+              <div class="mk-ticket-actions">
+                <button class="mk-ticket-act-btn primary ready-clr">Mark Served</button>
+                <button class="mk-ticket-act-btn" style="font-size:8px;color:var(--kds-txt-light)">Edit</button>
+              </div>
+            </div>
+            <!-- Ticket 4 - Received -->
+            <div class="mk-ticket">
+              <div class="mk-ticket-hdr received">
+                <div class="mk-ticket-hdr-time">
+                  <span class="mk-ticket-time">14:30</span>
+                  <span class="mk-ticket-elapsed">2m ago</span>
+                </div>
+                <div class="mk-ticket-hdr-room">
+                  <span class="mk-ticket-room-lbl">Room</span>
+                  <span class="mk-ticket-room-val">102</span>
+                </div>
+              </div>
+              <div class="mk-ticket-body">
+                <div class="mk-ticket-item"><span class="mk-ti-qty">2x</span><span class="mk-ti-name">Caesar Salad</span></div>
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Grilled Salmon</span></div>
+                <div class="mk-ticket-item"><span class="mk-ti-qty">2x</span><span class="mk-ti-name">Margherita Pizza</span></div>
+              </div>
+              <div class="mk-ticket-notes">
+                <span class="mk-ticket-notes-lbl">Notes</span>
+                VIP guest &mdash; extra attention
+              </div>
+              <div class="mk-ticket-actions">
+                <button class="mk-ticket-act-btn primary">Start Cooking</button>
+                <button class="mk-ticket-act-btn" style="font-size:8px;color:var(--kds-txt-light)">Edit</button>
+              </div>
+            </div>
+            <!-- Ticket 5 - Preparing -->
+            <div class="mk-ticket">
+              <div class="mk-ticket-hdr preparing">
+                <div class="mk-ticket-hdr-time">
+                  <span class="mk-ticket-time">14:18</span>
+                  <span class="mk-ticket-elapsed">14m ago</span>
+                </div>
+                <div class="mk-ticket-hdr-room">
+                  <span class="mk-ticket-room-lbl">Room</span>
+                  <span class="mk-ticket-room-val">310</span>
+                </div>
+              </div>
+              <div class="mk-ticket-body">
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Bruschetta Trio</span></div>
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Sparkling Water</span></div>
+              </div>
+              <div class="mk-ticket-actions">
+                <button class="mk-ticket-act-btn primary prep-clr">Mark Ready</button>
+                <button class="mk-ticket-act-btn" style="font-size:8px;color:var(--kds-txt-light)">Edit</button>
+              </div>
+            </div>
+            <!-- Ticket 6 - Received -->
+            <div class="mk-ticket">
+              <div class="mk-ticket-hdr received">
+                <div class="mk-ticket-hdr-time">
+                  <span class="mk-ticket-time">14:31</span>
+                  <span class="mk-ticket-elapsed">1m ago</span>
+                </div>
+                <div class="mk-ticket-hdr-room">
+                  <span class="mk-ticket-room-lbl">Room</span>
+                  <span class="mk-ticket-room-val">207</span>
+                </div>
+              </div>
+              <div class="mk-ticket-body">
+                <div class="mk-ticket-item"><span class="mk-ti-qty">1x</span><span class="mk-ti-name">Caesar Salad</span></div>
+              </div>
+              <div class="mk-ticket-actions">
+                <button class="mk-ticket-act-btn primary">Start Cooking</button>
+                <button class="mk-ticket-act-btn" style="font-size:8px;color:var(--kds-txt-light)">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Bottom bar -->
+      <div class="mk-bar">
+        <div class="mk-bar-btn bump-btn"><span class="bar-icon">&#9654;</span>Bump</div>
+        <div class="mk-bar-btn cook-btn"><span class="bar-icon">&#127859;</span>Cooking</div>
+        <div class="mk-bar-btn" style="color:var(--bump)"><span class="bar-icon">&#9989;</span>Ready</div>
+        <div class="mk-bar-btn"><span class="bar-icon">&#127869;</span>Served</div>
+        <div class="mk-bar-btn" style="color:var(--info)"><span class="bar-icon">&#128424;</span>Bill</div>
+        <div class="mk-bar-btn" style="color:var(--info)"><span class="bar-icon">&#9998;</span>Edit</div>
+        <div class="mk-bar-btn recall-btn"><span class="bar-icon">&#8634;</span>Recall</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 13 — API ENDPOINTS
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="12">
+  <div class="slide-eyebrow">Backend</div>
+  <h2 class="slide-title" style="margin-bottom:20px">API <em>Endpoints</em></h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 920 440" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:900px">
+      <!-- Restaurants group -->
+      <rect x="10" y="10" width="440" height="200" rx="12" fill="#1a1713" stroke="#302a23" stroke-width="1"/>
+      <text x="30" y="38" fill="#c9a96e" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700" letter-spacing="0.06em">/API/RESTAURANTS</text>
+      <!-- GET list -->
+      <rect x="30" y="50" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="52" y="63" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="82" y="63" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/restaurants</text>
+      <text x="320" y="63" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">List all restaurants</text>
+      <!-- POST create -->
+      <rect x="30" y="75" width="44" height="18" rx="3" fill="rgba(58,143,212,0.15)"/>
+      <text x="52" y="88" text-anchor="middle" fill="#3a8fd4" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">POST</text>
+      <text x="82" y="88" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/restaurants</text>
+      <text x="320" y="88" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Create restaurant</text>
+      <!-- GET one -->
+      <rect x="30" y="100" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="52" y="113" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="82" y="113" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/restaurants/{id}</text>
+      <text x="320" y="113" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Get one restaurant</text>
+      <!-- PATCH -->
+      <rect x="30" y="125" width="44" height="18" rx="3" fill="rgba(245,166,35,0.15)"/>
+      <text x="52" y="138" text-anchor="middle" fill="#f5a623" font-family="IBM Plex Mono,monospace" font-size="9" font-weight="600">PATCH</text>
+      <text x="82" y="138" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/restaurants/{id}</text>
+      <text x="320" y="138" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Update restaurant</text>
+      <!-- GET menu -->
+      <rect x="30" y="150" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="52" y="163" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="82" y="163" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/restaurants/{id}/menu</text>
+      <text x="320" y="163" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Get restaurant menu</text>
+      <!-- POST menu item -->
+      <rect x="30" y="175" width="44" height="18" rx="3" fill="rgba(58,143,212,0.15)"/>
+      <text x="52" y="188" text-anchor="middle" fill="#3a8fd4" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">POST</text>
+      <text x="82" y="188" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/restaurants/{id}/menu-items</text>
+      <text x="355" y="188" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Create menu item</text>
+
+      <!-- Orders group -->
+      <rect x="10" y="220" width="440" height="130" rx="12" fill="#1a1713" stroke="#302a23" stroke-width="1"/>
+      <text x="30" y="248" fill="#c9a96e" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700" letter-spacing="0.06em">/API/ORDERS</text>
+      <rect x="30" y="260" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="52" y="273" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="82" y="273" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/orders</text>
+      <text x="320" y="273" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">List orders (filterable)</text>
+      <rect x="30" y="285" width="44" height="18" rx="3" fill="rgba(58,143,212,0.15)"/>
+      <text x="52" y="298" text-anchor="middle" fill="#3a8fd4" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">POST</text>
+      <text x="82" y="298" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/orders</text>
+      <text x="320" y="298" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Create order</text>
+      <rect x="30" y="310" width="44" height="18" rx="3" fill="rgba(245,166,35,0.15)"/>
+      <text x="52" y="323" text-anchor="middle" fill="#f5a623" font-family="IBM Plex Mono,monospace" font-size="9" font-weight="600">PATCH</text>
+      <text x="82" y="323" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/orders/{id}/cancel</text>
+      <text x="320" y="323" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Cancel order</text>
+
+      <!-- Kitchen group -->
+      <rect x="470" y="10" width="440" height="155" rx="12" fill="#1a1713" stroke="#302a23" stroke-width="1"/>
+      <text x="490" y="38" fill="#22c45a" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700" letter-spacing="0.06em">/API/KITCHEN</text>
+      <rect x="490" y="50" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="512" y="63" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="542" y="63" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/kitchen/orders</text>
+      <text x="780" y="63" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Kitchen orders</text>
+      <rect x="490" y="75" width="44" height="18" rx="3" fill="rgba(245,166,35,0.15)"/>
+      <text x="512" y="88" text-anchor="middle" fill="#f5a623" font-family="IBM Plex Mono,monospace" font-size="9" font-weight="600">PATCH</text>
+      <text x="542" y="88" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/kitchen/orders/{id}</text>
+      <text x="780" y="88" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Update status</text>
+      <rect x="490" y="100" width="44" height="18" rx="3" fill="rgba(201,169,110,0.15)"/>
+      <text x="512" y="113" text-anchor="middle" fill="#c9a96e" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">PUT</text>
+      <text x="542" y="113" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/kitchen/orders/{id}/edit</text>
+      <text x="780" y="113" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Edit order</text>
+
+      <!-- Menu Items group -->
+      <rect x="470" y="175" width="440" height="130" rx="12" fill="#1a1713" stroke="#302a23" stroke-width="1"/>
+      <text x="490" y="203" fill="#c9a96e" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700" letter-spacing="0.06em">/API/MENU-ITEMS</text>
+      <rect x="490" y="215" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="512" y="228" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="542" y="228" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/menu-items</text>
+      <text x="780" y="228" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">List menu items</text>
+      <rect x="490" y="240" width="44" height="18" rx="3" fill="rgba(245,166,35,0.15)"/>
+      <text x="512" y="253" text-anchor="middle" fill="#f5a623" font-family="IBM Plex Mono,monospace" font-size="9" font-weight="600">PATCH</text>
+      <text x="542" y="253" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/menu-items/{id}</text>
+      <text x="780" y="253" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Update item</text>
+      <rect x="490" y="265" width="50" height="18" rx="3" fill="rgba(212,43,43,0.15)"/>
+      <text x="515" y="278" text-anchor="middle" fill="#d42b2b" font-family="IBM Plex Mono,monospace" font-size="9" font-weight="600">DELETE</text>
+      <text x="548" y="278" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/menu-items/{id}</text>
+      <text x="780" y="278" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Delete item</text>
+
+      <!-- Rooms group -->
+      <rect x="470" y="315" width="440" height="115" rx="12" fill="#1a1713" stroke="#302a23" stroke-width="1"/>
+      <text x="490" y="343" fill="#6aab7e" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700" letter-spacing="0.06em">/API/ROOMS</text>
+      <rect x="490" y="355" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="512" y="368" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="542" y="368" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/rooms</text>
+      <text x="780" y="368" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">List rooms</text>
+      <rect x="490" y="380" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="512" y="393" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="542" y="393" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/rooms/{room_id}</text>
+      <text x="780" y="393" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Get room</text>
+      <rect x="490" y="405" width="44" height="18" rx="3" fill="rgba(58,143,212,0.15)"/>
+      <text x="512" y="418" text-anchor="middle" fill="#3a8fd4" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">POST</text>
+      <text x="542" y="418" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/api/rooms</text>
+      <text x="780" y="418" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Create room</text>
+
+      <!-- HTML Pages group -->
+      <rect x="10" y="360" width="440" height="75" rx="12" fill="#1a1713" stroke="#302a23" stroke-width="1"/>
+      <text x="30" y="388" fill="#c9a96e" font-family="Barlow Condensed,sans-serif" font-size="16" font-weight="700" letter-spacing="0.06em">HTML PAGES</text>
+      <rect x="30" y="400" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="52" y="413" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="82" y="413" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/room/{room_id}</text>
+      <text x="260" y="413" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">Guest UI</text>
+      <rect x="290" y="400" width="44" height="18" rx="3" fill="rgba(34,196,90,0.15)"/>
+      <text x="312" y="413" text-anchor="middle" fill="#22c45a" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600">GET</text>
+      <text x="342" y="413" fill="#9d9184" font-family="IBM Plex Mono,monospace" font-size="11">/kitchen</text>
+      <text x="420" y="413" fill="#4a443d" font-family="DM Sans,sans-serif" font-size="10">KDS UI</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SLIDE 14 — SUMMARY & FUTURE
+═══════════════════════════════════════ -->
+<div class="slide" data-slide="13">
+  <div class="slide-eyebrow">Wrap-Up</div>
+  <h2 class="slide-title" style="margin-bottom:20px">Summary &amp; <em>Future</em></h2>
+  <div class="slide-content">
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-val">7</div><div class="metric-label">Restaurants</div></div>
+      <div class="metric-card"><div class="metric-val">100+</div><div class="metric-label">Menu Items</div></div>
+      <div class="metric-card"><div class="metric-val">40</div><div class="metric-label">Rooms</div></div>
+      <div class="metric-card"><div class="metric-val">5</div><div class="metric-label">Order States</div></div>
+    </div>
+    <div class="highlights-grid">
+      <div class="highlight-card">
+        <div class="highlight-card-title">Mobile-First Design</div>
+        <div class="highlight-card-desc">Optimized for phone screens guests use in-room. Responsive across tablet and desktop.</div>
+      </div>
+      <div class="highlight-card">
+        <div class="highlight-card-title">Accessible</div>
+        <div class="highlight-card-desc">Focus-visible states, ARIA attributes, prefers-reduced-motion support, keyboard navigation.</div>
+      </div>
+      <div class="highlight-card">
+        <div class="highlight-card-title">Dual Dark Themes</div>
+        <div class="highlight-card-desc">Warm gold-accented theme for guests, functional green-accented theme for kitchen staff.</div>
+      </div>
+      <div class="highlight-card">
+        <div class="highlight-card-title">Keyboard Shortcuts</div>
+        <div class="highlight-card-desc">KDS supports Space/Enter to bump, arrow keys to navigate, E to edit, R to recall.</div>
+      </div>
+    </div>
+    <div class="slide-eyebrow" style="margin-bottom:12px">Future Roadmap</div>
+    <div class="roadmap-row">
+      <span class="roadmap-item">WebSocket live updates</span>
+      <span class="roadmap-item">POS/PMS integration</span>
+      <span class="roadmap-item">Real payment gateway</span>
+      <span class="roadmap-item">User accounts &amp; auth</span>
+      <span class="roadmap-item">Inventory management</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<button class="nav-arrow prev" id="prevBtn" onclick="go(-1)">&#8592;</button>
+<button class="nav-arrow next" id="nextBtn" onclick="go(1)">&#8594;</button>
+<div class="nav-bar" id="navBar"></div>
+<div class="slide-counter" id="slideCounter"></div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  const navBar = document.getElementById('navBar');
+  const counter = document.getElementById('slideCounter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    navBar.appendChild(dot);
+  }
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= total || idx === current) return;
+    const dir = idx > current ? 1 : -1;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit');
+    setTimeout(() => slides[current === idx ? current : (current + total) % total].classList.remove('exit'), 500);
+
+    const prev = current;
+    current = idx;
+    slides[current].style.transform = dir > 0 ? 'translateX(80px)' : 'translateX(-80px)';
+    slides[current].offsetHeight;
+    slides[current].classList.add('active');
+    slides[current].style.transform = '';
+    slides[current].scrollTop = 0;
+
+    setTimeout(() => slides[prev].classList.remove('exit'), 500);
+
+    navBar.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    counter.textContent = (current + 1) + ' / ' + total;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+  }
+
+  function go(dir) { goTo(current + dir); }
+  window.go = go;
+
+  counter.textContent = '1 / ' + total;
+  prevBtn.disabled = true;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(-1); }
+  });
+})();
+</script>
+</body>
+</html>

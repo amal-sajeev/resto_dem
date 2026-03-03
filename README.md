@@ -13,6 +13,7 @@
    pip install -r requirements.txt
    python -m scripts.init_db
    python -m scripts.seed
+   python -m scripts.seed_orders        # optional: populate demo orders
    ```
 
 4. **Run the API:**

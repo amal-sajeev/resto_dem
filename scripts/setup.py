@@ -1,5 +1,5 @@
 """
-One-command server setup: reset database (drop + create tables) and seed all data.
+One-command server setup: reset database (drop + create tables), seed restaurants/rooms/menus, then seed orders.
 Run from project root: python -m scripts.setup
 
 Requires .env with DATABASE_URL (postgresql+asyncpg://...).
@@ -36,11 +36,24 @@ async def run_seed() -> None:
     await seed_mod.seed()
 
 
+async def run_seed_orders() -> None:
+    """Load and run the seed_orders script in this process."""
+    seed_orders_path = Path(__file__).parent / "seed_orders.py"
+    spec = importlib.util.spec_from_file_location("seed_orders", seed_orders_path)
+    assert spec and spec.loader, "Could not load seed_orders module"
+    seed_orders_mod = importlib.util.module_from_spec(spec)
+    sys.modules["seed_orders"] = seed_orders_mod
+    spec.loader.exec_module(seed_orders_mod)
+    await seed_orders_mod.seed_orders(clear=True)
+
+
 async def main() -> None:
     print("Setting up database...")
     await reset_db()
     print("Seeding data...")
     await run_seed()
+    print("Seeding orders...")
+    await run_seed_orders()
     print("Setup complete. Start the app with: uvicorn app.main:app --host 0.0.0.0")
 
 

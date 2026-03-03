@@ -325,6 +325,22 @@
     background: var(--success);
     animation: none;
   }
+  .dismiss-served-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-muted);
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    cursor: pointer;
+  }
+  .dismiss-served-btn:hover {
+    color: var(--text);
+    border-color: var(--gold-dim);
+  }
 
   /* Mini progress track — horizontal bar style */
   .mini-track-wrap {
@@ -440,6 +456,16 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 24px rgba(201,169,110,0.08);
   }
   .resto-card:active { transform: scale(0.98); }
+  .resto-card.closed {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: auto;
+  }
+  .resto-card.closed:hover {
+    border-color: var(--border);
+    transform: none;
+    box-shadow: none;
+  }
 
   @keyframes cardReveal {
     to { opacity: 1; transform: translateY(0); }
@@ -772,6 +798,17 @@
     font-size: 22px;
     font-weight: 500;
   }
+  .menu-search {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
 
   /* Category tabs */
   .cat-tabs {
@@ -867,6 +904,11 @@
     color: var(--text-muted);
     line-height: 1.55;
     margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .menu-item-allergens {
     font-size: 16px;
@@ -1583,6 +1625,7 @@
     </div>
     <div style="padding: 0 0 4px;">
       <h2 style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;padding: 0 0 14px 0;" id="menuRestoName"></h2>
+      <input class="menu-search" id="menuSearch" type="text" placeholder="Search dishes…" oninput="filterMenu(this.value)" />
       <div class="cat-tabs" id="catTabs"></div>
     </div>
   </div>
@@ -1606,6 +1649,9 @@
     <div class="hero" style="padding:0 0 24px;text-align:left;">
       <h2 style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;">Your order</h2>
     </div>
+    <div id="cartItemsList"></div>
+    <div class="cart-summary" id="cartSummary"></div>
+    <div class="divider"></div>
     <p class="section-label">Payment method</p>
     <div class="pay-options">
       <label class="pay-option selected" id="payOptBill" onclick="selectPayment('room_bill')">
@@ -1627,9 +1673,6 @@
     </div>
     <p class="section-label">Special requests</p>
     <textarea class="notes-area" id="orderNotes" placeholder="Allergies, preferences, or anything else…" rows="3"></textarea>
-    <div class="divider"></div>
-    <div id="cartItemsList"></div>
-    <div class="cart-summary" id="cartSummary"></div>
   </div>
   <div class="bottom-bar">
     <button class="btn-primary" id="placeOrderBtn" onclick="placeOrder()">Place order</button>
@@ -1644,11 +1687,11 @@
     <!-- sticky header -->
     <div class="od-header">
       <div class="od-header-row">
-        <button class="back-btn" onclick="goBack()">
+        <button class="back-btn" onclick="startOver()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          Back
+          Back to restaurants
         </button>
         <span class="room-tag" id="roomTagConfirm"><span class="room-tag-num">—</span></span>
       </div>
@@ -1769,6 +1812,7 @@ const state = {
   paymentMethod: 'room_bill',
   history: [],
   inProgressOrders: [],
+  dismissedServedOrderIds: [],  // order ids user dismissed from in-progress banner
   trackedOrderId: null,
 };
 
@@ -1904,6 +1948,16 @@ function closePartySheetOnBg(e) {
   if (e.target === document.getElementById('partyOverlay')) closePartySheet();
 }
 
+function setupSwipeToDismiss(sheetEl, onClose) {
+  if (!sheetEl || !onClose) return;
+  let startY = 0;
+  sheetEl.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+  sheetEl.addEventListener('touchend', (e) => {
+    const deltaY = e.changedTouches[0].clientY - startY;
+    if (deltaY > 80) onClose();
+  }, { passive: true });
+}
+
 function adjustParty(delta) {
   state.partySize = Math.max(1, Math.min(20, state.partySize + delta));
   const el = document.getElementById('partyVal');
@@ -1929,7 +1983,9 @@ function selectPayment(method) {
 function animateCartBadge(id) {
   const b = document.getElementById(id);
   if (!b) return;
-  b.textContent = cartCount();
+  const count = cartCount();
+  b.textContent = count;
+  b.style.display = count > 0 ? 'flex' : 'none';
   b.classList.add('pop');
   setTimeout(() => b.classList.remove('pop'), 300);
 }
@@ -1994,7 +2050,7 @@ function renderRestaurants() {
     return;
   }
   grid.innerHTML = state.restaurants.map((r, i) => `
-    <div class="resto-card" style="animation-delay:${i * 80}ms" onclick="selectRestaurant('${r.id}')">
+    <div class="resto-card${r.open_from && r.open_until && !isOpen(r.open_from, r.open_until) ? ' closed' : ''}" style="animation-delay:${i * 80}ms" onclick="selectRestaurant('${r.id}')">
       ${r.image_url
         ? `<img class="resto-img" src="${r.image_url}" alt="${r.name}" loading="lazy" />`
         : `<div class="resto-img-placeholder">${RESTO_EMOJI[i % RESTO_EMOJI.length]}</div>`}
@@ -2046,8 +2102,20 @@ function buildMiniTrack(status) {
 function renderInProgressBanner() {
   const section = document.getElementById('inProgressSection');
   if (!section) return;
-  const orders = state.inProgressOrders || [];
-  // Show every in-progress order (including multiple from the same restaurant)
+  let orders = state.inProgressOrders || [];
+  const dismissed = state.dismissedServedOrderIds || [];
+  const fiveMinMs = 5 * 60 * 1000;
+  const now = Date.now();
+  orders = orders.filter(order => {
+    if (dismissed.includes(order.id)) return false;
+    const status = order.status || 'received';
+    if (status !== 'served') return true;
+    const updatedAt = order.updated_at ? new Date(order.updated_at).getTime() : null;
+    const createdAt = order.created_at ? new Date(order.created_at).getTime() : null;
+    const ts = updatedAt || createdAt;
+    if (ts != null && (now - ts) > fiveMinMs) return false;
+    return true;
+  });
   if (orders.length === 0) {
     section.style.display = 'none';
     section.innerHTML = '';
@@ -2078,6 +2146,7 @@ function renderInProgressBanner() {
             <span class="pill-dot"></span>
             ${statusMeta.pillLabel}
           </div>
+          ${isServed ? `<button class="dismiss-served-btn" type="button" onclick="event.stopPropagation(); dismissServedOrder('${order.id}')">Dismiss</button>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -2087,7 +2156,16 @@ function renderInProgressBanner() {
     ${cardsHTML}`;
 }
 
+function dismissServedOrder(orderId) {
+  if (!state.dismissedServedOrderIds) state.dismissedServedOrderIds = [];
+  if (!state.dismissedServedOrderIds.includes(orderId)) {
+    state.dismissedServedOrderIds.push(orderId);
+    renderInProgressBanner();
+  }
+}
+
 function showTrackOrder(orderId) {
+  state.history = ['viewRestaurants'];
   state.trackedOrderId = orderId;
   showConfirmationForOrder(orderId);
 }
@@ -2378,6 +2456,9 @@ function closeItemDetailOnBg(e) {
   if (e.target === document.getElementById('itemDetailOverlay')) closeItemDetail();
 }
 
+setupSwipeToDismiss(document.querySelector('.party-sheet'), closePartySheet);
+setupSwipeToDismiss(document.querySelector('.item-detail-sheet'), closeItemDetail);
+
 function adjustItemDetailQty(delta) {
   itemDetailQty = Math.max(1, Math.min(20, itemDetailQty + delta));
   document.getElementById('itemDetailQty').textContent = itemDetailQty;
@@ -2420,6 +2501,8 @@ function addFromItemDetail() {
 function renderMenu() {
   const r = state.selectedRestaurant;
   document.getElementById('menuRestoName').textContent = r.name;
+  const searchEl = document.getElementById('menuSearch');
+  if (searchEl) { searchEl.value = ''; }
 
   const cats = [...new Set(state.menuItems.map(m => m.category))];
   const tabs = document.getElementById('catTabs');
@@ -2432,14 +2515,14 @@ function renderMenu() {
     return;
   }
 
-  section.innerHTML = cats.map((cat, ci) => `
+  section.innerHTML = `<div id="cat-All" style="height:1px;margin:0;padding:0;"></div>` + cats.map((cat, ci) => `
     <div id="cat-${cat.replace(/\s+/g,'-')}">
       <p class="menu-category-title">${cat}</p>
       ${state.menuItems.filter(m => m.category === cat).map((item, ii) => {
         const reqOpt = item.requires_option_selection && (item.options || []).length > 0;
         const optionsPreview = reqOpt ? (item.options || []).map(o => o.label).join(' · ') : '';
         return `
-        <div class="menu-item" style="animation-delay:${(ci*100 + ii*60)}ms;cursor:pointer;" onclick="openItemModal('${item.id}')">
+        <div class="menu-item" data-name="${(item.name || '').replace(/"/g, '&quot;')}" style="animation-delay:${(ci*100 + ii*60)}ms;cursor:pointer;" onclick="openItemModal('${item.id}')">
           ${item.image_url
             ? `<img class="menu-item-img" src="${item.image_url}" alt="${item.name}" loading="lazy" />`
             : `<div class="menu-item-img-placeholder">${RESTO_EMOJI[(ci+ii) % RESTO_EMOJI.length]}</div>`}
@@ -2460,6 +2543,30 @@ function renderMenu() {
       `}).join('')}
     </div>
   `).join('');
+  setupCategoryObserver();
+}
+
+function setupCategoryObserver() {
+  const tabs = document.querySelectorAll('.cat-tab');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tabs.forEach(t => t.classList.remove('active'));
+        const cat = e.target.id.replace('cat-', '');
+        const tab = [...tabs].find(t => t.textContent.replace(/\s/g, '-') === cat || (cat === 'All' && t.textContent.trim() === 'All'));
+        if (tab) tab.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  document.querySelectorAll('[id^="cat-"]').forEach(s => observer.observe(s));
+}
+
+function filterMenu(query) {
+  const q = (query || '').trim().toLowerCase();
+  document.querySelectorAll('.menu-item').forEach(el => {
+    const name = (el.getAttribute('data-name') || '').toLowerCase();
+    el.style.display = q === '' || name.includes(q) ? '' : 'none';
+  });
 }
 
 function scrollToCategory(cat, btn) {
@@ -2479,9 +2586,14 @@ function renderCart() {
   const list = document.getElementById('cartItemsList');
 
   if (!entries.length) {
-    list.innerHTML = '<div class="empty-msg">Your cart is empty.</div>';
+    list.innerHTML = `<div class="empty-msg">
+  <p>Your cart is empty</p>
+  <button class="btn-outline" style="width:auto;padding:12px 24px;margin-top:16px;" onclick="goBack()">Browse menu</button>
+</div>`;
     document.getElementById('cartSummary').innerHTML = '';
-    document.getElementById('placeOrderBtn').disabled = true;
+    const placeBtn = document.getElementById('placeOrderBtn');
+    placeBtn.disabled = true;
+    placeBtn.textContent = 'Place order';
     return;
   }
   document.getElementById('placeOrderBtn').disabled = false;
@@ -2508,6 +2620,7 @@ function renderCart() {
   }).join('');
 
   const total = cartTotal();
+  document.getElementById('placeOrderBtn').textContent = `Place order · ₹${fmt(total)}`;
   document.getElementById('cartSummary').innerHTML = `
     <div class="cart-summary-row"><span>${entries.reduce((s,e)=>s+e.quantity,0)} item(s)</span><span>₹${fmt(total)}</span></div>
     <div class="cart-summary-row"><span>Party of ${state.partySize}</span><span></span></div>
@@ -2594,6 +2707,7 @@ async function placeOrder() {
     const order = await res.json();
     state.trackedOrderId = order.id;
     state.cart = {};
+    state.history = [];
     updateAllCartBadges();
     // Refresh in-progress list so new order shows on restaurant screen
     try {
@@ -2701,6 +2815,7 @@ async function init() {
   }
 
   updateRoomBadges();
+  updateAllCartBadges();
 
   // Load restaurants
   try {

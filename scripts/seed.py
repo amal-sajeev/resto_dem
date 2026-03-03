@@ -94,10 +94,10 @@ async def seed() -> None:
             print("Data already present. Delete existing data first (e.g. drop tables and run init_db) to re-seed.")
             return
 
-        # Seed rooms (101-110, 201-210)
-        for floor in (1, 2):
+        # Seed rooms (101-110, 201-210, 301-310, 401-410)
+        for floor in (1, 2, 3, 4):
             for n in range(1, 11):
-                room_num = f"{floor}{n:02d}"  # 101..110, 201..210
+                room_num = f"{floor}{n:02d}"  # 101..110, 201..210, 301..310, 401..410
                 session.add(Room(room_number=room_num, display_name=f"Room {room_num}"))
         await session.flush()
 
@@ -458,7 +458,7 @@ async def seed() -> None:
                 session.add(MenuItemOption(menu_item_id=house_wine_r7.id, label=label, price_delta=Decimal(delta)))
 
         await session.commit()
-        print(f"Seed completed: 20 rooms, {len(restaurants)} restaurants, {len(items)} menu items.")
+        print(f"Seed completed: 40 rooms, {len(restaurants)} restaurants, {len(items)} menu items.")
 
 
 if __name__ == "__main__":

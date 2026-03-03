@@ -588,6 +588,8 @@
   .bar-btn.recall-btn:hover { background: rgba(212,43,43,0.13); }
   .bar-btn.info-btn   { color: var(--info); }
   .bar-btn.info-btn:hover { background: rgba(58,143,212,0.1); }
+  .bar-btn.bill-btn   { color: var(--info); }
+  .bar-btn.bill-btn:hover { background: rgba(58,143,212,0.1); }
 
   /* Bar button tooltips (large, on hover) */
   .bar-btn {
@@ -1239,6 +1241,15 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  @media print {
+    body > *:not(#printBillArea) { display: none !important; }
+    #printBillArea {
+      display: block !important;
+      position: static !important;
+    }
+    #printBillArea .bill-close-btn { display: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -1327,9 +1338,9 @@
       <span class="bar-btn-tooltip"><strong>SERVED</strong> Marks the ticket as delivered to the room. It drops to the bottom of the grid and dims out.</span>
       <span class="bar-icon">🚚</span><span class="bar-lbl">SERVED</span>
     </button>
-    <button class="bar-btn info-btn" onclick="showOrderInfo()" aria-label="Info">
-      <span class="bar-btn-tooltip"><strong>INFO</strong> Pops an alert with the full order details: order ID, room, party size, payment method, itemised prices, and any notes. Handy if a runner has a question.</span>
-      <span class="bar-icon">ℹ</span><span class="bar-lbl">INFO</span>
+    <button class="bar-btn bill-btn" onclick="printBill()" aria-label="Bill">
+      <span class="bar-btn-tooltip"><strong>BILL</strong> Generates a printable bill for the selected ticket and opens the browser print dialog.</span>
+      <span class="bar-icon">🧾</span><span class="bar-lbl">BILL</span>
     </button>
     <button class="bar-btn info-btn" onclick="editSelected()" aria-label="Edit">
       <span class="bar-btn-tooltip"><strong>EDIT</strong> Opens an editor for the selected ticket. You can change item quantities, remove items, add new items from the menu, and edit notes.</span>
@@ -1760,14 +1771,105 @@ function recallLast() {
   });
 }
 
-function showOrderInfo() {
+function printBill() {
   if (!S.selectedId) return flashBar();
   const o = S.orders.find(x => x.id === S.selectedId);
   if (!o) return;
-  const items = o.items.map(it =>
-    `  ${it.quantity}× ${it.name}  ₹${(it.unit_price * it.quantity).toFixed(2)}`
-  ).join('\n');
-  alert(`ORDER #${o.id.slice(0,8).toUpperCase()}\nRoom ${o.room_id}  ·  Party: ${o.party_size}  ·  ${o.payment_method}\nStatus: ${o.status}  ·  Total: ₹${parseFloat(o.subtotal).toFixed(2)}\n\n${items}${o.notes ? `\n\n⚠ ${o.notes}` : ''}`);
+
+  const resto = S.restaurants.find(r => r.id === S.restoId);
+  const restoName = resto ? resto.name : 'Restaurant';
+  const ref = o.id.slice(0, 8).toUpperCase();
+  const dt = new Date(o.created_at.endsWith('Z') ? o.created_at : o.created_at + 'Z');
+  const dateStr = dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  const timeStr = dt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const payLabel = o.payment_method === 'room_bill' ? 'Room Bill' : 'Pay Now (Cash/Card)';
+
+  const itemRows = o.items.map(it => {
+    const lineTotal = (parseFloat(it.unit_price) * it.quantity).toFixed(2);
+    const optLabels = (it.options || []).map(op => op.label).filter(Boolean);
+    const optStr = optLabels.length
+      ? `<div style="font-size:12px;color:#777;padding-left:28px;margin-top:-2px;">${optLabels.join(', ')}</div>`
+      : '';
+    return `<tr>
+      <td style="padding:6px 0;font-size:14px;text-align:left;">${it.quantity}&times;</td>
+      <td style="padding:6px 8px;font-size:14px;text-align:left;">${it.name}${it.notes ? '<br><span style="font-size:12px;color:#777;">'+it.notes+'</span>' : ''}</td>
+      <td style="padding:6px 0;font-size:14px;text-align:right;white-space:nowrap;">₹${lineTotal}</td>
+    </tr>${optStr ? '<tr><td></td><td colspan="2">'+optStr+'</td></tr>' : ''}`;
+  }).join('');
+
+  let area = document.getElementById('printBillArea');
+  if (!area) {
+    area = document.createElement('div');
+    area.id = 'printBillArea';
+    area.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:#fff;';
+    document.body.appendChild(area);
+  }
+
+  area.innerHTML = `
+    <div class="bill-close-btn" style="position:fixed;top:16px;right:16px;z-index:100000;">
+      <button type="button" onclick="closeBillView()" style="padding:10px 20px;font-size:14px;font-family:inherit;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">Close</button>
+    </div>
+    <div style="max-width:400px;margin:0 auto;padding:40px 24px;font-family:'Georgia','Times New Roman',serif;color:#1a1a1a;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <h1 style="font-size:22px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin:0;">${restoName}</h1>
+        <div style="font-size:11px;color:#999;letter-spacing:0.15em;text-transform:uppercase;margin-top:6px;">Bill</div>
+      </div>
+
+      <div style="border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:12px 0;margin-bottom:16px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#555;display:flex;flex-wrap:wrap;gap:4px 16px;">
+        <span><strong>Ref:</strong> #${ref}</span>
+        <span><strong>Room:</strong> ${o.room_id}</span>
+        <span><strong>Party:</strong> ${o.party_size}</span>
+        <span><strong>Date:</strong> ${dateStr}</span>
+        <span><strong>Time:</strong> ${timeStr}</span>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;font-family:'Helvetica Neue',Arial,sans-serif;">
+        <thead>
+          <tr style="border-bottom:1px solid #ddd;">
+            <th style="padding:6px 0;font-size:12px;text-align:left;color:#999;font-weight:500;">Qty</th>
+            <th style="padding:6px 8px;font-size:12px;text-align:left;color:#999;font-weight:500;">Item</th>
+            <th style="padding:6px 0;font-size:12px;text-align:right;color:#999;font-weight:500;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows}
+        </tbody>
+      </table>
+
+      <div style="border-top:2px solid #1a1a1a;margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;font-family:'Helvetica Neue',Arial,sans-serif;">
+        <span style="font-size:16px;font-weight:700;">Total</span>
+        <span style="font-size:16px;font-weight:700;">₹${parseFloat(o.subtotal).toFixed(2)}</span>
+      </div>
+
+      <div style="margin-top:16px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#555;">
+        <strong>Payment:</strong> ${payLabel}
+      </div>
+
+      ${o.notes ? `<div style="margin-top:12px;padding:10px 12px;background:#f9f7f2;border-radius:6px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#555;"><strong>Notes:</strong> ${o.notes}</div>` : ''}
+
+      <div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #eee;">
+        <p style="font-size:14px;font-style:italic;color:#888;margin:0;">Thank you for dining with us</p>
+      </div>
+    </div>
+  `;
+
+  area.style.display = 'block';
+  window.print();
+  // Hide immediately after print() returns (handles Chrome where afterprint fires synchronously)
+  // and also register the event for browsers that fire it asynchronously
+  const hideBill = () => {
+    const a = document.getElementById('printBillArea');
+    if (a) a.style.display = 'none';
+    window.removeEventListener('afterprint', hideBill);
+  };
+  window.addEventListener('afterprint', hideBill, { once: true });
+  // Fallback: if afterprint never fires (some browsers), hide after a short delay
+  setTimeout(hideBill, 500);
+}
+
+function closeBillView() {
+  const area = document.getElementById('printBillArea');
+  if (area) area.style.display = 'none';
 }
 
 function flashBar() {
