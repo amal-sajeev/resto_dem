@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import kitchen, menu_items, orders, pages, restaurants, rooms
+from app.routers import admin, auth, kitchen, menu_items, orders, pages, reservations, restaurants, rooms, tables
 
 app = FastAPI(
     title="Hotel Multi-Restaurant Ordering API",
@@ -13,8 +13,12 @@ app.include_router(orders.router, prefix="/api")
 app.include_router(kitchen.router, prefix="/api")
 app.include_router(menu_items.router, prefix="/api")
 app.include_router(rooms.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
+app.include_router(tables.router, prefix="/api")
+app.include_router(reservations.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 
-# HTML pages (no prefix: /room/{room_id}, /kitchen)
+# HTML pages
 app.include_router(pages.router)
 
 
@@ -26,6 +30,10 @@ async def root() -> dict:
         "openapi": "/openapi.json",
         "guest": "/room/101",
         "kitchen": "/kitchen",
+        "login": "/login",
+        "reserve": "/reserve",
+        "admin": "/admin",
+        "scanner": "/scanner",
     }
 
 

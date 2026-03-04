@@ -305,6 +305,57 @@
     text-align: center;
   }
 
+  /* ── Tab bar + main wrap ── */
+  .kds-main-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .kds-tabs {
+    display: flex;
+    background: var(--bar);
+    border-bottom: 2px solid var(--rail-b);
+    flex-shrink: 0;
+  }
+  .kds-tab {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--txt-light);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -2px;
+  }
+  .kds-tab:hover { color: var(--card-bg); }
+  .kds-tab.active {
+    color: var(--bump);
+    border-bottom-color: var(--bump);
+  }
+  .kds-tab-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--rail-b);
+    color: var(--txt-light);
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 4px;
+    vertical-align: middle;
+    min-width: 18px;
+    text-align: center;
+  }
+  .kds-tab.active .kds-tab-badge { background: rgba(34,196,90,0.15); color: var(--bump); }
+  .kds-tab-badge.hidden { display: none; }
+
   /* ── Grid wrap ── */
   .kds-grid-wrap {
     flex: 1;
@@ -385,6 +436,27 @@
   }
   @keyframes ticketOut {
     to { opacity: 0; transform: scale(0.88); }
+  }
+
+  /* Archive ticket — read-only, muted appearance */
+  .ticket.archive-ticket {
+    opacity: 0.7;
+    cursor: default;
+    animation: none;
+  }
+  .ticket.archive-ticket:hover { transform: none; box-shadow: 0 2px 8px rgba(0,0,0,0.45); }
+  .ticket-served-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-top: 1.5px solid var(--card-b);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--s-served);
   }
 
   /* Ticket header */
@@ -586,6 +658,7 @@
   .bar-btn.cook-btn:hover { background: rgba(245,166,35,0.13); }
   .bar-btn.recall-btn { color: var(--recall);  background: rgba(212,43,43,0.05); }
   .bar-btn.recall-btn:hover { background: rgba(212,43,43,0.13); }
+  .bar-btn.recall-btn.no-recall { color: var(--txt-light); background: none; opacity: 0.45; pointer-events: none; }
   .bar-btn.info-btn   { color: var(--info); }
   .bar-btn.info-btn:hover { background: rgba(58,143,212,0.1); }
   .bar-btn.bill-btn   { color: var(--info); }
@@ -1132,6 +1205,143 @@
   .edit-btn.cancel { background: var(--rail-b); color: var(--txt-light); }
 
   /* ═══════════════════════════════════════
+     RECALL CONFIRMATION MODAL
+  ═══════════════════════════════════════ */
+  .recall-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .recall-overlay.open { display: flex; }
+
+  .recall-dialog {
+    background: var(--rail);
+    border: 2px solid var(--recall);
+    border-radius: 10px;
+    width: min(480px, 90vw);
+    box-shadow: 0 0 60px rgba(212,43,43,0.18), 0 20px 50px rgba(0,0,0,0.6);
+    animation: modalIn 0.22s ease-out;
+    overflow: hidden;
+  }
+
+  .recall-dialog-hdr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 2px solid var(--rail-b);
+    background: rgba(212,43,43,0.06);
+  }
+  .recall-dialog-icon {
+    font-size: 28px;
+    line-height: 1;
+    color: var(--recall);
+  }
+  .recall-dialog-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--recall);
+  }
+
+  .recall-dialog-body {
+    padding: 20px 22px;
+  }
+  .recall-detail-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .recall-detail-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--txt-light);
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+  .recall-detail-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--card-bg);
+  }
+
+  .recall-items-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--txt-light);
+    margin: 14px 0 8px;
+  }
+  .recall-items-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--rail-b);
+  }
+  .recall-items-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(37,39,32,0.5);
+    font-size: 14px;
+    color: var(--card-bg);
+  }
+  .recall-item-qty {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--txt-mid);
+    min-width: 30px;
+  }
+  .recall-item-name {
+    font-weight: 500;
+  }
+
+  .recall-dialog-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px 22px 20px;
+    border-top: 2px solid var(--rail-b);
+  }
+  .recall-action-btn {
+    flex: 1;
+    padding: 16px 14px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: filter 0.12s, transform 0.1s;
+  }
+  .recall-action-btn:hover { filter: brightness(1.12); }
+  .recall-action-btn:active { transform: scale(0.97); }
+  .recall-action-btn.cancel {
+    background: var(--rail-b);
+    color: var(--txt-light);
+  }
+  .recall-action-btn.confirm {
+    background: var(--recall);
+    color: #fff;
+  }
+
+  /* ═══════════════════════════════════════
      RESPONSIVE
   ═══════════════════════════════════════ */
   @media (max-width: 768px) {
@@ -1311,11 +1521,27 @@
         <div class="rail-empty">No active orders</div>
       </div>
     </div>
-    <div class="kds-grid-wrap">
-      <div class="kds-grid" id="kdsGrid" aria-live="polite">
-        <div class="kds-empty">
-          <div class="spinner"></div>
-          <p class="kds-empty-sub">Loading orders…</p>
+    <div class="kds-main-wrap">
+      <div class="kds-tabs">
+        <button class="kds-tab active" id="tabLive" onclick="switchTab('live')">LIVE</button>
+        <button class="kds-tab" id="tabArchive" onclick="switchTab('archive')">
+          ARCHIVE <span class="kds-tab-badge hidden" id="archiveBadge">0</span>
+        </button>
+      </div>
+      <div class="kds-grid-wrap" id="paneLive">
+        <div class="kds-grid" id="kdsGrid" aria-live="polite">
+          <div class="kds-empty">
+            <div class="spinner"></div>
+            <p class="kds-empty-sub">Loading orders…</p>
+          </div>
+        </div>
+      </div>
+      <div class="kds-grid-wrap" id="paneArchive" style="display:none">
+        <div class="kds-grid" id="archiveGrid">
+          <div class="kds-empty">
+            <div class="kds-empty-icon">🗂</div>
+            <p class="kds-empty-title">No served orders yet</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1391,6 +1617,23 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════
+     RECALL CONFIRMATION MODAL
+═══════════════════════════════════════ -->
+<div class="recall-overlay" id="recallOverlay" onclick="if(event.target===this)closeRecallModal()">
+  <div class="recall-dialog" role="dialog" aria-modal="true" aria-labelledby="recallDialogTitle">
+    <div class="recall-dialog-hdr">
+      <span class="recall-dialog-icon">↩</span>
+      <span class="recall-dialog-title" id="recallDialogTitle">Recall Order</span>
+    </div>
+    <div class="recall-dialog-body" id="recallDialogBody"></div>
+    <div class="recall-dialog-footer">
+      <button class="recall-action-btn cancel" onclick="closeRecallModal()">NEVERMIND</button>
+      <button class="recall-action-btn confirm" onclick="confirmRecall()">RECALL ORDER</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
 const REFRESH_SEC = 15;
@@ -1401,6 +1644,9 @@ const S = {
   restaurants: [],
   restoId: null,
   orders: [],
+  archive: [],
+  servedThisSession: new Set(),
+  sessionStart: null,
   selectedId: null,
   lastBumped: null,
   knownIds: new Set(),
@@ -1408,6 +1654,7 @@ const S = {
   tickInterval: null,
   elapsedInterval: null,
 };
+let currentTab = 'live';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const pad = n => String(n).padStart(2, '0');
@@ -1523,13 +1770,18 @@ function selectResto(id) {
   if (!r) return;
   S.restoId = id;
   S.orders = [];
+  S.archive = [];
+  S.servedThisSession = new Set();
+  S.sessionStart = Date.now();
   S.knownIds = new Set();
   S.selectedId = null;
+  currentTab = 'live';
   setUrlResto(id);
 
   document.getElementById('kdsRestoName').textContent = r.name.toUpperCase();
   document.getElementById('pickerScreen').style.display = 'none';
   document.getElementById('kdsScreen').style.display = 'flex';
+  switchTab('live');
 
   clearInterval(S.tickInterval);
   clearInterval(S.elapsedInterval);
@@ -1574,8 +1826,24 @@ async function loadOrders() {
       if (newOnes.length) flashNewHeader();
     }
     orders.forEach(o => S.knownIds.add(o.id));
-    S.orders = orders;
+
+    // Orders served this session stay in the live grid so staff can still cancel them
+    S.orders = orders.filter(o => o.status !== 'served' || S.servedThisSession.has(o.id));
+
+    const archiveIds = new Set(S.archive.map(a => a.id));
+    const newArchived = orders.filter(o =>
+      o.status === 'served' &&
+      !S.servedThisSession.has(o.id) &&
+      !archiveIds.has(o.id)
+    );
+    if (newArchived.length) {
+      S.archive = [...S.archive, ...newArchived]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      renderArchiveTab();
+    }
+
     renderKDS();
+    updateRecallBtn();
   } catch (e) {
     console.error('Load orders failed', e);
   }
@@ -1627,11 +1895,9 @@ function renderRail() {
 
 function renderGrid() {
   const grid = document.getElementById('kdsGrid');
-  const STATUS_RANK = { received: 0, preparing: 1, ready: 2, served: 3 };
-  const sorted = [...S.orders].sort((a, b) => {
-    const sr = STATUS_RANK[a.status] - STATUS_RANK[b.status];
-    return sr !== 0 ? sr : new Date(a.created_at) - new Date(b.created_at);
-  });
+
+  // Sort only by arrival time — positions never change when status updates
+  const sorted = [...S.orders].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   if (!sorted.length) {
     grid.innerHTML = `<div class="kds-empty">
@@ -1644,7 +1910,32 @@ function renderGrid() {
 
   const hasSel = sorted.some(o => o.id === S.selectedId);
   grid.className = 'kds-grid' + (hasSel ? ' has-selection' : '');
-  grid.innerHTML = sorted.map((o, i) => renderTicket(o, i)).join('');
+
+  // Clear any empty-state / loading placeholder (has no data-id)
+  grid.querySelectorAll('.kds-empty').forEach(el => el.remove());
+
+  // Remove cards for orders that are no longer in the list
+  grid.querySelectorAll('.ticket[data-id]').forEach(card => {
+    if (!sorted.find(o => o.id === card.dataset.id)) card.remove();
+  });
+
+  sorted.forEach((o, i) => {
+    const existing = grid.querySelector(`.ticket[data-id="${o.id}"]`);
+    if (existing) {
+      // Patch in-place — don't move the card; skip if already animating out
+      if (!existing.classList.contains('bump-out')) patchTicketCard(existing, o);
+    } else {
+      // New card — insert at correct position
+      const html = renderTicket(o, i);
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      const newCard = tmp.firstElementChild;
+      // Find the next sibling by created_at order
+      const nextCard = [...grid.querySelectorAll('.ticket[data-id]')]
+        .find(c => new Date(c.dataset.created) > new Date(o.created_at));
+      grid.insertBefore(newCard, nextCard || null);
+    }
+  });
 }
 
 function renderTicket(order, i) {
@@ -1704,6 +1995,92 @@ function renderTicket(order, i) {
   </div>`;
 }
 
+function patchTicketCard(card, order) {
+  const NEXT     = { received: 'preparing', preparing: 'ready', ready: 'served' };
+  const NEXT_LBL = { received: 'Start cooking', preparing: 'Mark ready', ready: 'Mark served' };
+  const NEXT_CLS = { received: 'primary', preparing: 'primary prep-clr', ready: 'primary ready-clr' };
+
+  card.dataset.status = order.status;
+  card.dataset.age = ageClass(order.created_at, order.status);
+  card.classList.toggle('selected', order.id === S.selectedId);
+
+  const next = NEXT[order.status];
+  const primaryBtn = card.querySelector('.ticket-act-btn.primary, .ticket-act-btn[disabled]');
+  if (primaryBtn) {
+    if (next) {
+      primaryBtn.disabled = false;
+      primaryBtn.className = `ticket-act-btn ${NEXT_CLS[order.status]}`;
+      primaryBtn.textContent = NEXT_LBL[order.status];
+      primaryBtn.onclick = e => { e.stopPropagation(); advanceOrder(order.id, next); };
+    } else {
+      primaryBtn.disabled = true;
+      primaryBtn.className = 'ticket-act-btn dimmed';
+      primaryBtn.textContent = 'Served';
+      primaryBtn.onclick = null;
+    }
+  }
+}
+
+// ─── Archive tab ─────────────────────────────────────────────────────────────
+function renderArchiveTab() {
+  const badge = document.getElementById('archiveBadge');
+  const count = S.archive.length;
+  badge.textContent = count;
+  badge.classList.toggle('hidden', count === 0);
+
+  const grid = document.getElementById('archiveGrid');
+  if (!grid) return;
+
+  if (!count) {
+    grid.innerHTML = `<div class="kds-empty">
+      <div class="kds-empty-icon">🗂</div>
+      <p class="kds-empty-title">No served orders yet</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = S.archive.map(o => renderArchiveTicket(o)).join('');
+}
+
+function renderArchiveTicket(order) {
+  const payLbl = order.payment_method === 'room_bill' ? 'BILL' : 'CASH';
+  return `<div class="ticket archive-ticket" data-status="served">
+    <div class="ticket-hdr">
+      <div class="ticket-hdr-time">
+        <div class="ticket-time">${formatHM(order.created_at)}</div>
+        <div class="ticket-elapsed">${elapsedLabel(order.created_at)}</div>
+      </div>
+      <div class="ticket-hdr-room">
+        <span class="ticket-room-lbl">Room</span>
+        <span class="ticket-room-val">${order.room_id}</span>
+        <span class="ticket-meta">👥 ${order.party_size} · ${payLbl}</span>
+      </div>
+    </div>
+    <div class="ticket-body">
+      ${order.items.map(it => {
+        const optLabels = (it.options || []).map(o => o.label).filter(Boolean);
+        const optStr = optLabels.length ? `<div class="ti-item-note">⤷ ${optLabels.join(', ')}</div>` : '';
+        const noteStr = it.notes ? `<div class="ti-item-note" style="color:var(--s-new)">📝 ${it.notes}</div>` : '';
+        return `<div class="ticket-item">
+           <span class="ti-qty">${it.quantity}×</span>
+           <span class="ti-name">${it.name}</span>
+         </div>${optStr}${noteStr}`;
+      }).join('')}
+    </div>
+    ${order.notes ? `<div class="ticket-notes"><span class="ticket-notes-lbl">⚠ Notes</span>${order.notes}</div>` : ''}
+    <div class="ticket-served-badge">✓ SERVED</div>
+  </div>`;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabLive').classList.toggle('active', tab === 'live');
+  document.getElementById('tabArchive').classList.toggle('active', tab === 'archive');
+  document.getElementById('paneLive').style.display = tab === 'live' ? '' : 'none';
+  document.getElementById('paneArchive').style.display = tab === 'archive' ? '' : 'none';
+  if (tab === 'archive') renderArchiveTab();
+}
+
 // ─── Ticket interaction ───────────────────────────────────────────────────────
 function selectTicket(id) {
   S.selectedId = S.selectedId === id ? null : id;
@@ -1727,9 +2104,23 @@ async function advanceOrder(id, newStatus) {
     const updated = await res.json();
     const idx = S.orders.findIndex(o => o.id === id);
     if (idx !== -1) S.orders[idx] = updated;
-    if (newStatus === 'served') S.lastBumped = updated;
+    if (newStatus === 'served') {
+      S.lastBumped = updated;
+      S.servedThisSession.add(id);
+    }
     if (S.selectedId === id) S.selectedId = null;
-    renderKDS();
+
+    // Patch the card in-place so it doesn't move; update stats + rail only
+    const freshCard = document.querySelector(`.ticket[data-id="${id}"]`);
+    if (freshCard) {
+      freshCard.style.opacity = '';
+      patchTicketCard(freshCard, updated);
+    }
+    const grid = document.getElementById('kdsGrid');
+    grid.className = 'kds-grid' + (S.selectedId ? ' has-selection' : '');
+    renderStats();
+    renderRail();
+    updateRecallBtn();
     const statusLabels = { preparing: 'Cooking', ready: 'Ready', served: 'Served' };
     showKdsToast(`Order → ${statusLabels[newStatus] || newStatus}`);
   } catch (e) {
@@ -1743,6 +2134,7 @@ async function cancelOrder(id) {
     const res = await fetch(`/api/orders/${id}/cancel`, { method: 'PATCH' });
     if (!res.ok) throw new Error();
     S.orders = S.orders.filter(o => o.id !== id);
+    S.servedThisSession.delete(id);
     if (S.selectedId === id) S.selectedId = null;
     renderKDS();
   } catch (e) { alert('Could not cancel order.'); }
@@ -1750,6 +2142,7 @@ async function cancelOrder(id) {
 
 // ─── Bottom bar ───────────────────────────────────────────────────────────────
 function bumpSelected() {
+  if (currentTab !== 'live') return flashBar();
   if (!S.selectedId) return flashBar();
   const order = S.orders.find(o => o.id === S.selectedId);
   if (!order) return;
@@ -1758,20 +2151,50 @@ function bumpSelected() {
 }
 
 function advanceSelected(status) {
+  if (currentTab !== 'live') return flashBar();
   if (!S.selectedId) return flashBar();
   advanceOrder(S.selectedId, status);
 }
 
 function recallLast() {
+  if (currentTab !== 'live') return flashBar();
   if (!S.lastBumped) return flashBar();
-  if (!confirm('Recall last served order?')) return;
-  advanceOrder(S.lastBumped.id, 'ready').then(() => {
+  openRecallModal();
+}
+
+function openRecallModal() {
+  const o = S.lastBumped;
+  const time = formatHM(o.created_at);
+  const itemsHtml = o.items.map(it =>
+    `<li><span class="recall-item-qty">${it.quantity}&times;</span><span class="recall-item-name">${it.name}</span></li>`
+  ).join('');
+
+  document.getElementById('recallDialogBody').innerHTML =
+    `<div class="recall-detail-row"><span class="recall-detail-lbl">Room</span><span class="recall-detail-val">${o.room_id}</span></div>` +
+    `<div class="recall-detail-row"><span class="recall-detail-lbl">Time</span><span class="recall-detail-val">${time}</span></div>` +
+    `<div class="recall-detail-row"><span class="recall-detail-lbl">Party</span><span class="recall-detail-val">${o.party_size} guest${o.party_size !== 1 ? 's' : ''}</span></div>` +
+    `<div class="recall-items-lbl">Items</div><ul class="recall-items-list">${itemsHtml}</ul>`;
+
+  document.getElementById('recallOverlay').classList.add('open');
+}
+
+function closeRecallModal() {
+  document.getElementById('recallOverlay').classList.remove('open');
+}
+
+function confirmRecall() {
+  closeRecallModal();
+  const recalledId = S.lastBumped.id;
+  advanceOrder(recalledId, 'ready').then(() => {
+    S.servedThisSession.delete(recalledId);
     S.lastBumped = null;
+    updateRecallBtn();
     showKdsToast('Order recalled');
   });
 }
 
 function printBill() {
+  if (currentTab !== 'live') return flashBar();
   if (!S.selectedId) return flashBar();
   const o = S.orders.find(x => x.id === S.selectedId);
   if (!o) return;
@@ -1879,6 +2302,12 @@ function flashBar() {
   setTimeout(() => { bar.style.background = ''; bar.style.animation = ''; }, 500);
 }
 
+function updateRecallBtn() {
+  const btn = document.querySelector('.recall-btn');
+  if (!btn) return;
+  btn.classList.toggle('no-recall', !S.lastBumped);
+}
+
 // ─── Edit modal ───────────────────────────────────────────────────────────────
 const EditState = {
   orderId: null,
@@ -1889,6 +2318,7 @@ const EditState = {
 };
 
 function editSelected() {
+  if (currentTab !== 'live') return flashBar();
   if (!S.selectedId) return flashBar();
   openEditModal(S.selectedId);
 }
@@ -2217,6 +2647,10 @@ document.getElementById('editOverlay').addEventListener('click', function(e) {
 
 // ─── Keyboard shortcuts ─────────────────────────────────────────────────────
 document.addEventListener('keydown', function(e) {
+  if (document.getElementById('recallOverlay').classList.contains('open')) {
+    if (e.key === 'Escape') closeRecallModal();
+    return;
+  }
   if (document.getElementById('editOverlay').classList.contains('open')) {
     if (e.key === 'Escape') closeEditModal();
     return;

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Table Reservations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080705;
+    --bg2: #110f0c;
+    --card: #1a1713;
+    --card2: #221e19;
+    --border: #302a23;
+    --gold: #c9a96e;
+    --gold-lt: #e8c98a;
+    --gold-dim: #7a6340;
+    --text: #f0ebe3;
+    --text-muted: #9d9184;
+    --text-dim: #4a443d;
+    --danger: #c0614a;
+    --success: #6aab7e;
+    --info: #5b9bd5;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --transition: 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,169,110,0.06) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 24px 20px 100px; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .top-bar h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--gold-lt);
+  }
+  .top-bar .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .top-bar .user-name {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition);
+  }
+  .tab-btn.active { background: var(--card2); color: var(--gold); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Form elements */
+  .form-group { margin-bottom: 18px; }
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .form-group select, .form-group input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color var(--transition);
+    appearance: none;
+  }
+  .form-group select { cursor: pointer; }
+  .form-group select:focus, .form-group input:focus { border-color: var(--gold-dim); }
+  .form-group textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+    transition: border-color var(--transition);
+  }
+  .form-group textarea:focus { border-color: var(--gold-dim); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    border: none;
+    border-radius: var(--radius);
+    padding: 15px;
+    color: var(--bg);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    letter-spacing: 0.03em;
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Reservation cards */
+  .res-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: border-color var(--transition);
+  }
+  .res-card:hover { border-color: var(--gold-dim); }
+  .res-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .res-card-header h3 {
+    font-family: 'Lora', serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .status-pending { background: rgba(201,169,110,0.15); color: var(--gold); }
+  .status-confirmed { background: rgba(106,171,126,0.15); color: var(--success); }
+  .status-cancelled { background: rgba(192,97,74,0.15); color: var(--danger); }
+  .status-completed { background: rgba(91,155,213,0.15); color: var(--info); }
+  .status-no_show { background: rgba(192,97,74,0.1); color: var(--text-dim); }
+
+  .res-card-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .res-detail {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .res-detail strong {
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .res-card-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .btn-sm {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-sm:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .btn-sm.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  .qr-container {
+    text-align: center;
+    margin-top: 12px;
+  }
+  .qr-container img {
+    background: #fff;
+    padding: 8px;
+    border-radius: 8px;
+    max-width: 160px;
+  }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .message.success { display: block; background: rgba(106,171,126,0.12); border: 1px solid rgba(106,171,126,0.3); color: var(--success); }
+  .message.error { display: block; background: rgba(192,97,74,0.12); border: 1px solid rgba(192,97,74,0.3); color: var(--danger); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  /* Table picker grid */
+  .table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .table-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .table-chip:hover { border-color: var(--gold-dim); }
+  .table-chip.selected { border-color: var(--gold); background: rgba(201,169,110,0.1); }
+  .table-chip.unavailable { opacity: 0.35; cursor: not-allowed; }
+  .table-chip .t-num { font-weight: 500; color: var(--text); font-size: 0.95rem; }
+  .table-chip .t-cap { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+  .slot-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .slot-chip:hover { border-color: var(--gold-dim); }
+  .slot-chip.selected { border-color: var(--gold); background: rgba(201,169,110,0.1); color: var(--gold); }
+  .slot-chip.full { opacity: 0.3; cursor: not-allowed; }
+  .slot-chip .slot-avail { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top-bar">
+    <h1>Reservations</h1>
+    <div class="user-info">
+      <span class="user-name" id="user-name"></span>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('new')">New Reservation</button>
+    <button class="tab-btn" onclick="switchTab('my')">My Reservations</button>
+  </div>
+
+  <div id="msg" class="message"></div>
+
+  <!-- New Reservation Panel -->
+  <div id="panel-new" class="panel active">
+    <div class="form-group">
+      <label>Restaurant</label>
+      <select id="sel-restaurant" onchange="onRestaurantChange()">
+        <option value="">Select a restaurant</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="sel-date" onchange="onDateChange()" />
+      </div>
+      <div class="form-group">
+        <label>Party Size</label>
+        <input type="number" id="sel-party" min="1" max="50" value="2" onchange="onPartyChange()" />
+      </div>
+    </div>
+
+    <div id="slots-section" style="display:none">
+      <label style="display:block;font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Select a Time Slot</label>
+      <div id="slot-grid" class="table-grid"></div>
+    </div>
+
+    <div id="tables-section" style="display:none">
+      <label style="display:block;font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Select a Table</label>
+      <div id="table-grid" class="table-grid"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="sel-notes" placeholder="Special requests, allergies, etc."></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="createReservation()">Reserve Table</button>
+  </div>
+
+  <!-- My Reservations Panel -->
+  <div id="panel-my" class="panel">
+    <div id="reservations-list"></div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let token = localStorage.getItem('auth_token');
+let user = null;
+let restaurants = [];
+let selectedTableId = null;
+let selectedSlot = null;
+let slotsData = null;
+let tablesData = [];
+
+function authHeaders() {
+  return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'message ' + type;
+}
+function clearMsg() {
+  document.getElementById('msg').className = 'message';
+}
+
+function logout() {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
+  window.location.href = '/login';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (tab === 'new' && i === 0) || (tab === 'my' && i === 1));
+  });
+  document.getElementById('panel-new').classList.toggle('active', tab === 'new');
+  document.getElementById('panel-my').classList.toggle('active', tab === 'my');
+  clearMsg();
+  if (tab === 'my') loadMyReservations();
+}
+
+async function init() {
+  if (!token) { window.location.href = '/login'; return; }
+  try {
+    const res = await fetch(API + '/auth/me', { headers: authHeaders() });
+    if (!res.ok) { logout(); return; }
+    user = await res.json();
+    document.getElementById('user-name').textContent = user.name;
+  } catch { logout(); return; }
+
+  // Set default date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('sel-date').value = today;
+  document.getElementById('sel-date').min = today;
+
+  await loadRestaurants();
+}
+
+async function loadRestaurants() {
+  const res = await fetch(API + '/restaurants');
+  restaurants = await res.json();
+  const sel = document.getElementById('sel-restaurant');
+  restaurants.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.name;
+    sel.appendChild(opt);
+  });
+}
+
+async function onRestaurantChange() {
+  selectedTableId = null;
+  selectedSlot = null;
+  document.getElementById('tables-section').style.display = 'none';
+  const rid = document.getElementById('sel-restaurant').value;
+  if (!rid) { document.getElementById('slots-section').style.display = 'none'; return; }
+  await loadSlots();
+}
+
+async function onDateChange() {
+  selectedSlot = null;
+  selectedTableId = null;
+  document.getElementById('tables-section').style.display = 'none';
+  const rid = document.getElementById('sel-restaurant').value;
+  if (rid) await loadSlots();
+}
+
+function onPartyChange() {
+  if (selectedSlot) renderTables();
+}
+
+async function loadSlots() {
+  const rid = document.getElementById('sel-restaurant').value;
+  const dateVal = document.getElementById('sel-date').value;
+  if (!rid || !dateVal) return;
+
+  try {
+    const res = await fetch(`${API}/reservations/slots?restaurant_id=${rid}&date=${dateVal}`);
+    const data = await res.json();
+    slotsData = data;
+    selectedSlot = null;
+    selectedTableId = null;
+    document.getElementById('tables-section').style.display = 'none';
+
+    // Load tables for this restaurant
+    const tRes = await fetch(API + '/tables?restaurant_id=' + rid);
+    tablesData = await tRes.json();
+    const totalTables = tablesData.length;
+
+    const grid = document.getElementById('slot-grid');
+    document.getElementById('slots-section').style.display = 'block';
+
+    if (data.slots.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:20px;">No time slots available</div>';
+      return;
+    }
+
+    grid.innerHTML = '';
+    data.slots.forEach(slot => {
+      const bookedCount = (data.booked[slot] || []).length;
+      const available = totalTables - bookedCount;
+      const nextHour = parseInt(slot.split(':')[0]) + 1;
+      const label = `${slot} – ${nextHour < 24 ? nextHour.toString().padStart(2, '0') : '00'}:00`;
+
+      const chip = document.createElement('div');
+      chip.className = 'slot-chip';
+      if (available <= 0) chip.classList.add('full');
+      chip.innerHTML = `<div>${label}</div><div class="slot-avail">${available > 0 ? available + ' table' + (available > 1 ? 's' : '') : 'Full'}</div>`;
+      chip.onclick = () => {
+        if (available <= 0) return;
+        selectedSlot = slot;
+        grid.querySelectorAll('.slot-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        selectedTableId = null;
+        renderTables();
+      };
+      grid.appendChild(chip);
+    });
+  } catch { /* ignore */ }
+}
+
+function renderTables() {
+  if (!selectedSlot || !slotsData) return;
+  const bookedIds = slotsData.booked[selectedSlot] || [];
+  const partySize = parseInt(document.getElementById('sel-party').value) || 2;
+  const grid = document.getElementById('table-grid');
+  grid.innerHTML = '';
+  document.getElementById('tables-section').style.display = 'block';
+
+  if (tablesData.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:20px;">No tables</div>';
+    return;
+  }
+  tablesData.forEach(t => {
+    const isBooked = bookedIds.includes(t.id);
+    const tooSmall = t.capacity < partySize;
+    const chip = document.createElement('div');
+    chip.className = 'table-chip';
+    if (isBooked || tooSmall) chip.classList.add('unavailable');
+    if (t.id === selectedTableId) chip.classList.add('selected');
+    const statusText = isBooked ? 'Booked' : `Seats ${t.capacity}`;
+    chip.innerHTML = `<div class="t-num">Table ${t.table_number}</div><div class="t-cap">${statusText}</div>`;
+    chip.onclick = () => {
+      if (isBooked || tooSmall) return;
+      selectedTableId = t.id;
+      grid.querySelectorAll('.table-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    };
+    grid.appendChild(chip);
+  });
+}
+
+async function createReservation() {
+  clearMsg();
+  const restaurantId = document.getElementById('sel-restaurant').value;
+  const dateVal = document.getElementById('sel-date').value;
+  const partySize = parseInt(document.getElementById('sel-party').value);
+  const notes = document.getElementById('sel-notes').value.trim();
+
+  if (!restaurantId) { showMsg('Please select a restaurant', 'error'); return; }
+  if (!dateVal) { showMsg('Please select a date', 'error'); return; }
+  if (!selectedSlot) { showMsg('Please select a time slot', 'error'); return; }
+  if (!selectedTableId) { showMsg('Please select a table', 'error'); return; }
+
+  try {
+    const res = await fetch(API + '/reservations', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        restaurant_id: restaurantId,
+        table_id: selectedTableId,
+        reservation_date: dateVal,
+        reservation_time: selectedSlot + ':00',
+        party_size: partySize,
+        notes: notes || null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to create reservation');
+    showMsg('Reservation created successfully!', 'success');
+    selectedTableId = null;
+    selectedSlot = null;
+    document.getElementById('sel-notes').value = '';
+    switchTab('my');
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+async function loadMyReservations() {
+  const container = document.getElementById('reservations-list');
+  container.innerHTML = '<div class="empty-state">Loading...</div>';
+
+  try {
+    const res = await fetch(API + '/reservations', { headers: authHeaders() });
+    const data = await res.json();
+    if (data.length === 0) {
+      container.innerHTML = '<div class="empty-state">No reservations yet</div>';
+      return;
+    }
+    container.innerHTML = data.map(r => renderCard(r)).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state">Failed to load reservations</div>';
+  }
+}
+
+function renderCard(r) {
+  const d = new Date(r.reservation_date + 'T00:00:00');
+  const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const timeStr = r.reservation_time.slice(0, 5);
+  const canCancel = r.status === 'pending' || r.status === 'confirmed';
+
+  return `
+    <div class="res-card">
+      <div class="res-card-header">
+        <h3>${r.restaurant_name || 'Restaurant'}</h3>
+        <span class="status-badge status-${r.status}">${r.status}</span>
+      </div>
+      <div class="res-card-details">
+        <div class="res-detail">Date: <strong>${dateStr}</strong></div>
+        <div class="res-detail">Time: <strong>${timeStr}</strong></div>
+        <div class="res-detail">Table: <strong>${r.table_number || '-'}</strong></div>
+        <div class="res-detail">Party: <strong>${r.party_size}</strong></div>
+      </div>
+      ${r.notes ? `<div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">${r.notes}</div>` : ''}
+      <div class="res-card-actions">
+        <button class="btn-sm" onclick="showQR('${r.id}')">Show QR</button>
+        ${canCancel ? `<button class="btn-sm danger" onclick="cancelRes('${r.id}')">Cancel</button>` : ''}
+      </div>
+      <div class="qr-container" id="qr-${r.id}" style="display:none"></div>
+    </div>
+  `;
+}
+
+async function showQR(id) {
+  const container = document.getElementById('qr-' + id);
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    return;
+  }
+  container.innerHTML = `<img src="${API}/reservations/${id}/qr?token=${encodeURIComponent(token)}&t=${Date.now()}" alt="QR Code" />`;
+  container.style.display = 'block';
+}
+
+async function cancelRes(id) {
+  if (!confirm('Cancel this reservation?')) return;
+  try {
+    const res = await fetch(API + '/reservations/' + id + '/cancel', {
+      method: 'PATCH',
+      headers: authHeaders(),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+    showMsg('Reservation cancelled', 'success');
+    loadMyReservations();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+init();
+</script>
+</body>
+</html>

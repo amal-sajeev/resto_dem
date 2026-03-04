@@ -1,10 +1,10 @@
 import enum
-from datetime import datetime, time
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Numeric, String, Text, Time
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text, Time
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +20,21 @@ class OrderStatus(str, enum.Enum):
     ready = "ready"
     served = "served"
     cancelled = "cancelled"
+
+
+class UserRole(str, enum.Enum):
+    normal_user = "normal_user"
+    establishment_admin = "establishment_admin"
+    restaurant_admin = "restaurant_admin"
+    supervisor = "supervisor"
+
+
+class ReservationStatus(str, enum.Enum):
+    pending = "pending"
+    confirmed = "confirmed"
+    cancelled = "cancelled"
+    completed = "completed"
+    no_show = "no_show"
 
 
 from sqlalchemy.orm import DeclarativeBase
@@ -45,6 +60,8 @@ class Restaurant(Base):
 
     menu_items: Mapped[list["MenuItem"]] = relationship("MenuItem", back_populates="restaurant")
     orders: Mapped[list["Order"]] = relationship("Order", back_populates="restaurant")
+    tables: Mapped[list["Table"]] = relationship("Table", back_populates="restaurant")
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="restaurant")
 
 
 class MenuItem(Base):
@@ -155,3 +172,75 @@ class OrderItemOption(Base):
     menu_item_option: Mapped["MenuItemOption"] = relationship(
         "MenuItemOption", back_populates="order_item_options"
     )
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    encrypted_name: Mapped[str] = mapped_column(Text, nullable=False)
+    encrypted_phone: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    phone_hash: Mapped[Optional[str]] = mapped_column(String(64), unique=True, nullable=True)
+    encrypted_email: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, default=UserRole.normal_user)
+    restaurant_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("restaurants.id", ondelete="SET NULL"), nullable=True
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=utc_now)
+
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user")
+
+
+class Table(Base):
+    __tablename__ = "tables"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    restaurant_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("restaurants.id", ondelete="CASCADE"), nullable=False
+    )
+    table_number: Mapped[str] = mapped_column(String(32), nullable=False)
+    capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="tables")
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="table")
+
+
+class Reservation(Base):
+    __tablename__ = "reservations"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    restaurant_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("restaurants.id", ondelete="CASCADE"), nullable=False
+    )
+    table_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tables.id", ondelete="CASCADE"), nullable=False
+    )
+    reservation_date: Mapped[date] = mapped_column(Date, nullable=False)
+    reservation_time: Mapped[time] = mapped_column(Time, nullable=False)
+    party_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[ReservationStatus] = mapped_column(
+        Enum(ReservationStatus), nullable=False, default=ReservationStatus.pending
+    )
+    confirmation_code: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=utc_now)
+
+    user: Mapped["User"] = relationship("User", back_populates="reservations")
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="reservations")
+    table: Mapped["Table"] = relationship("Table", back_populates="reservations")
+
+
+class OTPCode(Base):
+    __tablename__ = "otp_codes"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    phone_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(6), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    is_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

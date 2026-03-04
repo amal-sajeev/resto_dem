@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080705;
+    --bg2: #110f0c;
+    --card: #1a1713;
+    --card2: #221e19;
+    --border: #302a23;
+    --gold: #c9a96e;
+    --gold-lt: #e8c98a;
+    --gold-dim: #7a6340;
+    --text: #f0ebe3;
+    --text-muted: #9d9184;
+    --text-dim: #4a443d;
+    --danger: #c0614a;
+    --success: #6aab7e;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --transition: 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,169,110,0.06) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .login-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .login-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 400;
+    color: var(--gold-lt);
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+  }
+  .login-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .tab-bar {
+    display: flex;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition);
+  }
+  .tab-btn.active {
+    background: var(--card2);
+    color: var(--gold);
+  }
+
+  .form-panel {
+    display: none;
+  }
+  .form-panel.active {
+    display: block;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .form-group input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color var(--transition);
+  }
+  .form-group input:focus {
+    border-color: var(--gold-dim);
+  }
+  .form-group input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    border: none;
+    border-radius: var(--radius);
+    padding: 15px;
+    color: var(--bg);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    letter-spacing: 0.03em;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 15px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-top: 12px;
+  }
+  .btn-secondary:hover {
+    border-color: var(--gold-dim);
+  }
+
+  .otp-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .otp-row .form-group { flex: 1; margin-bottom: 0; }
+  .otp-row .btn-send {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    color: var(--gold);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition);
+  }
+  .otp-row .btn-send:hover { border-color: var(--gold-dim); }
+  .otp-row .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .message.success {
+    display: block;
+    background: rgba(106,171,126,0.12);
+    border: 1px solid rgba(106,171,126,0.3);
+    color: var(--success);
+  }
+  .message.error {
+    display: block;
+    background: rgba(192,97,74,0.12);
+    border: 1px solid rgba(192,97,74,0.3);
+    color: var(--danger);
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="login-container">
+  <div class="login-header">
+    <h1>Welcome</h1>
+    <p>Sign in to make reservations</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('guest')">Guest</button>
+    <button class="tab-btn" onclick="switchTab('staff')">Staff</button>
+  </div>
+
+  <div id="msg" class="message"></div>
+
+  <!-- Guest OTP Panel -->
+  <div id="panel-guest" class="form-panel active">
+    <div id="step-phone">
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="phone" placeholder="+1 234 567 8900" autocomplete="tel" />
+      </div>
+      <button class="btn-primary" onclick="requestOTP()">Send Verification Code</button>
+    </div>
+
+    <div id="step-otp" class="hidden">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="otp-name" placeholder="Your name" />
+      </div>
+      <div class="otp-row">
+        <div class="form-group">
+          <label>Verification Code</label>
+          <input type="text" id="otp-code" placeholder="000000" maxlength="6" inputmode="numeric" />
+        </div>
+        <button class="btn-send" onclick="requestOTP()" id="btn-resend">Resend</button>
+      </div>
+      <div style="height:20px"></div>
+      <button class="btn-primary" onclick="verifyOTP()">Sign In</button>
+      <button class="btn-secondary" onclick="backToPhone()">Back</button>
+    </div>
+  </div>
+
+  <!-- Staff Panel -->
+  <div id="panel-staff" class="form-panel">
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="staff-email" placeholder="admin@hotel.com" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="staff-password" placeholder="Password" autocomplete="current-password" />
+    </div>
+    <button class="btn-primary" onclick="staffLogin()">Sign In</button>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let _phone = '';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (tab === 'guest' && i === 0) || (tab === 'staff' && i === 1));
+  });
+  document.getElementById('panel-guest').classList.toggle('active', tab === 'guest');
+  document.getElementById('panel-staff').classList.toggle('active', tab === 'staff');
+  clearMsg();
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'message ' + type;
+}
+function clearMsg() {
+  const el = document.getElementById('msg');
+  el.className = 'message';
+  el.textContent = '';
+}
+
+function saveAuth(data) {
+  localStorage.setItem('auth_token', data.access_token);
+  localStorage.setItem('auth_user', JSON.stringify(data.user));
+}
+
+function redirectByRole(role) {
+  if (role === 'normal_user') {
+    window.location.href = '/reserve';
+  } else if (role === 'establishment_admin' || role === 'restaurant_admin') {
+    window.location.href = '/admin';
+  } else if (role === 'supervisor') {
+    window.location.href = '/scanner';
+  } else {
+    window.location.href = '/';
+  }
+}
+
+async function requestOTP() {
+  clearMsg();
+  const phone = document.getElementById('phone').value.trim();
+  if (!phone || phone.length < 7) {
+    showMsg('Please enter a valid phone number', 'error');
+    return;
+  }
+  _phone = phone;
+  try {
+    const res = await fetch(API + '/auth/otp/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to send OTP');
+    showMsg('Verification code sent! Check console (demo mode).', 'success');
+    document.getElementById('step-phone').classList.add('hidden');
+    document.getElementById('step-otp').classList.remove('hidden');
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+function backToPhone() {
+  document.getElementById('step-phone').classList.remove('hidden');
+  document.getElementById('step-otp').classList.add('hidden');
+  clearMsg();
+}
+
+async function verifyOTP() {
+  clearMsg();
+  const code = document.getElementById('otp-code').value.trim();
+  const name = document.getElementById('otp-name').value.trim();
+  if (code.length !== 6) {
+    showMsg('Enter the 6-digit code', 'error');
+    return;
+  }
+  try {
+    const res = await fetch(API + '/auth/otp/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: _phone, code, name: name || null }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Verification failed');
+    saveAuth(data);
+    redirectByRole(data.user.role);
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+async function staffLogin() {
+  clearMsg();
+  const email = document.getElementById('staff-email').value.trim();
+  const password = document.getElementById('staff-password').value;
+  if (!email || !password) {
+    showMsg('Please enter email and password', 'error');
+    return;
+  }
+  try {
+    const res = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Login failed');
+    saveAuth(data);
+    redirectByRole(data.user.role);
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+// If already logged in, redirect
+(function checkAuth() {
+  const token = localStorage.getItem('auth_token');
+  const user = localStorage.getItem('auth_user');
+  if (token && user) {
+    try {
+      const u = JSON.parse(user);
+      redirectByRole(u.role);
+    } catch {}
+  }
+})();
+</script>
+</body>
+</html>

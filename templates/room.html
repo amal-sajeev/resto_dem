@@ -1590,6 +1590,320 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* ── Reserve button in header ── */
+  .btn-reserve-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(201,169,110,0.1);
+    border: 1px solid var(--gold-dim);
+    border-radius: 100px;
+    padding: 7px 16px;
+    color: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-transform: uppercase;
+  }
+  .btn-reserve-header:hover { background: rgba(201,169,110,0.18); }
+  .btn-reserve-header svg { flex-shrink: 0; }
+
+  /* ── Auth / Reserve views ── */
+  .auth-container, .reserve-container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    width: 100%;
+  }
+  .auth-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 7vw, 38px);
+    font-weight: 300;
+    text-align: center;
+    margin-bottom: 8px;
+    color: var(--gold-lt);
+  }
+  .auth-sub {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+  }
+  .rv-form-group { margin-bottom: 18px; }
+  .rv-form-group label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .rv-input, .rv-select {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color var(--transition);
+    appearance: none;
+  }
+  .rv-input:focus, .rv-select:focus { border-color: var(--gold-dim); }
+  .rv-input::placeholder { color: var(--text-dim); }
+  .rv-textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    resize: vertical;
+    min-height: 56px;
+    transition: border-color var(--transition);
+  }
+  .rv-textarea:focus { border-color: var(--gold-dim); }
+
+  .rv-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .rv-btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    border: none;
+    border-radius: var(--radius);
+    padding: 15px;
+    color: var(--bg);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    letter-spacing: 0.03em;
+  }
+  .rv-btn-primary:hover { filter: brightness(1.1); }
+  .rv-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rv-btn-secondary {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-top: 10px;
+  }
+  .rv-btn-secondary:hover { border-color: var(--gold-dim); }
+
+  .otp-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .otp-row .rv-form-group { flex: 1; margin-bottom: 0; }
+  .btn-otp-send {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    color: var(--gold);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition);
+  }
+  .btn-otp-send:hover { border-color: var(--gold-dim); }
+
+  .rv-msg {
+    padding: 11px 16px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    margin-bottom: 18px;
+    display: none;
+  }
+  .rv-msg.success { display: block; background: rgba(106,171,126,0.12); border: 1px solid rgba(106,171,126,0.3); color: var(--success); }
+  .rv-msg.error { display: block; background: rgba(192,97,74,0.12); border: 1px solid rgba(192,97,74,0.3); color: var(--danger); }
+
+  .rv-hidden { display: none !important; }
+
+  /* Table grid for reservation */
+  .rv-table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .rv-table-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .rv-table-chip:hover { border-color: var(--gold-dim); }
+  .rv-table-chip.selected { border-color: var(--gold); background: rgba(201,169,110,0.1); }
+  .rv-table-chip.unavailable { opacity: 0.35; cursor: not-allowed; }
+  .rv-table-chip .t-num { font-weight: 500; color: var(--text); font-size: 0.92rem; }
+  .rv-table-chip .t-cap { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+  .rv-slot-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .rv-slot-chip:hover { border-color: var(--gold-dim); }
+  .rv-slot-chip.selected { border-color: var(--gold); background: rgba(201,169,110,0.1); color: var(--gold); }
+  .rv-slot-chip.full { opacity: 0.3; cursor: not-allowed; }
+  .rv-slot-chip .slot-avail { font-size: 0.68rem; color: var(--text-muted); margin-top: 3px; }
+
+  /* Reservation cards */
+  .rv-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    margin-bottom: 14px;
+    transition: border-color var(--transition);
+  }
+  .rv-card:hover { border-color: var(--gold-dim); }
+  .rv-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .rv-card-header h3 {
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  .rv-status-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .rv-status-pending { background: rgba(201,169,110,0.15); color: var(--gold); }
+  .rv-status-confirmed { background: rgba(106,171,126,0.15); color: var(--success); }
+  .rv-status-cancelled { background: rgba(192,97,74,0.15); color: var(--danger); }
+  .rv-status-completed { background: rgba(91,155,213,0.15); color: #5b9bd5; }
+  .rv-status-no_show { background: rgba(192,97,74,0.1); color: var(--text-dim); }
+
+  .rv-card-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .rv-card-details strong { color: var(--text); font-weight: 400; }
+
+  .rv-card-actions { display: flex; gap: 8px; align-items: center; }
+  .rv-btn-sm {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .rv-btn-sm:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .rv-btn-sm.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .rv-qr-container {
+    text-align: center;
+    margin-top: 10px;
+  }
+  .rv-qr-container img {
+    background: #fff;
+    padding: 8px;
+    border-radius: 8px;
+    max-width: 150px;
+  }
+  .rv-tab-bar {
+    display: flex;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .rv-tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 11px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition);
+  }
+  .rv-tab-btn.active { background: var(--card2); color: var(--gold); }
+
+  .rv-user-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 20px;
+  }
+  .rv-user-bar .rv-user-name {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .rv-user-bar .rv-signout {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .rv-user-bar .rv-signout:hover { border-color: var(--danger); color: var(--danger); }
+
+  .rv-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .rv-empty { text-align: center; padding: 36px; color: var(--text-dim); font-size: 0.9rem; }
 </style>
 </head>
 <body>
@@ -1609,7 +1923,13 @@
 <div class="view" id="viewRestaurants">
   <div class="app-header-ghost">
     <span class="header-eyebrow">In-Room Dining</span>
-    <span class="header-room" id="heroRoom">—</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="btn-reserve-header" onclick="openReservation()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 1v4M11 1v4M2 7h12"/></svg>
+        Reserve
+      </button>
+      <span class="header-room" id="heroRoom">—</span>
+    </div>
   </div>
   <div class="hero">
     <h1 class="hero-title">Good evening,<br /><em>where shall we dine?</em></h1>
@@ -1776,6 +2096,115 @@
         </div>
         <button class="btn-outline" onclick="startOver()">Order from another restaurant</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- VIEW: Auth (Sign In / Sign Up)    -->
+<!-- ══════════════════════════════════ -->
+<div class="view" id="viewAuth">
+  <div class="app-header">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Back
+    </button>
+    <span class="room-tag"><span class="room-tag-num" id="roomTagAuth">—</span></span>
+  </div>
+  <div class="auth-container" style="padding-top:24px;">
+    <h2 class="auth-title">Reserve a Table</h2>
+    <p class="auth-sub">Sign in with your phone number to book</p>
+    <div id="rvAuthMsg" class="rv-msg"></div>
+
+    <div id="authStepPhone">
+      <div class="rv-form-group">
+        <label>Phone Number</label>
+        <input type="tel" class="rv-input" id="rvPhone" placeholder="+1 234 567 8900" autocomplete="tel" />
+      </div>
+      <button class="rv-btn-primary" onclick="rvRequestOTP()">Send Verification Code</button>
+    </div>
+
+    <div id="authStepOTP" class="rv-hidden">
+      <div class="rv-form-group">
+        <label>Your Name</label>
+        <input type="text" class="rv-input" id="rvName" placeholder="Name" />
+      </div>
+      <div class="otp-row">
+        <div class="rv-form-group">
+          <label>Verification Code</label>
+          <input type="text" class="rv-input" id="rvOtpCode" placeholder="000000" maxlength="6" inputmode="numeric" />
+        </div>
+        <button class="btn-otp-send" onclick="rvRequestOTP()">Resend</button>
+      </div>
+      <div style="height:18px"></div>
+      <button class="rv-btn-primary" onclick="rvVerifyOTP()">Sign In</button>
+      <button class="rv-btn-secondary" onclick="rvBackToPhone()">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- VIEW: Reservations                -->
+<!-- ══════════════════════════════════ -->
+<div class="view" id="viewReserve">
+  <div class="app-header">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Back
+    </button>
+    <span class="room-tag"><span class="room-tag-num" id="roomTagReserve">—</span></span>
+  </div>
+  <div class="reserve-container" style="padding-top:12px;">
+    <div class="rv-user-bar">
+      <span class="rv-user-name" id="rvUserName"></span>
+      <button class="rv-signout" onclick="rvSignOut()">Sign Out</button>
+    </div>
+
+    <div class="rv-tab-bar">
+      <button class="rv-tab-btn active" onclick="rvSwitchTab('new')">New Reservation</button>
+      <button class="rv-tab-btn" onclick="rvSwitchTab('my')">My Reservations</button>
+    </div>
+
+    <div id="rvMsgReserve" class="rv-msg"></div>
+
+    <!-- New reservation form -->
+    <div id="rvPanelNew">
+      <div class="rv-form-group">
+        <label>Restaurant</label>
+        <select class="rv-select" id="rvSelRestaurant" onchange="rvOnRestaurantChange()"></select>
+      </div>
+      <div class="rv-form-row">
+        <div class="rv-form-group">
+          <label>Date</label>
+          <input type="date" class="rv-input" id="rvSelDate" onchange="rvOnDateChange()" />
+        </div>
+        <div class="rv-form-group">
+          <label>Party Size</label>
+          <input type="number" class="rv-input" id="rvSelParty" min="1" max="50" value="2" onchange="rvOnPartyChange()" />
+        </div>
+      </div>
+      <div id="rvSlotsSection" style="display:none">
+        <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Select a Time Slot</label>
+        <div id="rvSlotGrid" class="rv-table-grid"></div>
+      </div>
+      <div id="rvTablesSection" style="display:none">
+        <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Select a Table</label>
+        <div id="rvTableGrid" class="rv-table-grid"></div>
+      </div>
+      <div class="rv-form-group">
+        <label>Notes (optional)</label>
+        <textarea class="rv-textarea" id="rvSelNotes" placeholder="Special requests, allergies..."></textarea>
+      </div>
+      <button class="rv-btn-primary" onclick="rvCreateReservation()">Reserve Table</button>
+    </div>
+
+    <!-- My reservations list -->
+    <div id="rvPanelMy" class="rv-hidden">
+      <div id="rvReservationsList"></div>
     </div>
   </div>
 </div>
@@ -2918,6 +3347,342 @@ window.showView = function(id, push) {
   if (id === 'viewCart') renderCart();
   _origShowView(id, push);
 };
+
+// ─── Reservation System ──────────────────────────────────────────────────────
+const rvState = {
+  token: localStorage.getItem('auth_token'),
+  user: null,
+  phone: '',
+  selectedTableId: null,
+  selectedSlot: null,
+  slotsData: null,
+  tablesData: [],
+};
+
+function rvAuthHeaders() {
+  return { 'Authorization': 'Bearer ' + rvState.token, 'Content-Type': 'application/json' };
+}
+
+function rvShowMsg(containerId, text, type) {
+  const el = document.getElementById(containerId);
+  el.textContent = text;
+  el.className = 'rv-msg ' + type;
+}
+function rvClearMsg(containerId) {
+  const el = document.getElementById(containerId);
+  el.className = 'rv-msg';
+  el.textContent = '';
+}
+
+function openReservation() {
+  if (rvState.token && rvState.user) {
+    rvInitReserveView();
+    showView('viewReserve');
+  } else if (rvState.token) {
+    rvCheckAuth().then(ok => {
+      if (ok) { rvInitReserveView(); showView('viewReserve'); }
+      else showView('viewAuth');
+    });
+  } else {
+    showView('viewAuth');
+  }
+}
+
+async function rvCheckAuth() {
+  try {
+    const res = await fetch('/api/auth/me', { headers: rvAuthHeaders() });
+    if (!res.ok) { rvState.token = null; rvState.user = null; localStorage.removeItem('auth_token'); return false; }
+    rvState.user = await res.json();
+    return true;
+  } catch { rvState.token = null; rvState.user = null; return false; }
+}
+
+// ── OTP Flow ──
+async function rvRequestOTP() {
+  rvClearMsg('rvAuthMsg');
+  const phone = document.getElementById('rvPhone').value.trim();
+  if (!phone || phone.length < 7) { rvShowMsg('rvAuthMsg', 'Please enter a valid phone number', 'error'); return; }
+  rvState.phone = phone;
+  try {
+    const res = await fetch('/api/auth/otp/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to send OTP');
+    rvShowMsg('rvAuthMsg', 'Code sent! Check the server console (demo mode).', 'success');
+    document.getElementById('authStepPhone').classList.add('rv-hidden');
+    document.getElementById('authStepOTP').classList.remove('rv-hidden');
+  } catch (e) { rvShowMsg('rvAuthMsg', e.message, 'error'); }
+}
+
+function rvBackToPhone() {
+  document.getElementById('authStepPhone').classList.remove('rv-hidden');
+  document.getElementById('authStepOTP').classList.add('rv-hidden');
+  rvClearMsg('rvAuthMsg');
+}
+
+async function rvVerifyOTP() {
+  rvClearMsg('rvAuthMsg');
+  const code = document.getElementById('rvOtpCode').value.trim();
+  const name = document.getElementById('rvName').value.trim();
+  if (code.length !== 6) { rvShowMsg('rvAuthMsg', 'Enter the 6-digit code', 'error'); return; }
+  try {
+    const res = await fetch('/api/auth/otp/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: rvState.phone, code, name: name || null }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Verification failed');
+    rvState.token = data.access_token;
+    rvState.user = data.user;
+    localStorage.setItem('auth_token', data.access_token);
+    // Reset auth form
+    document.getElementById('rvOtpCode').value = '';
+    document.getElementById('rvName').value = '';
+    rvBackToPhone();
+    rvClearMsg('rvAuthMsg');
+    rvInitReserveView();
+    showView('viewReserve');
+  } catch (e) { rvShowMsg('rvAuthMsg', e.message, 'error'); }
+}
+
+function rvSignOut() {
+  rvState.token = null;
+  rvState.user = null;
+  localStorage.removeItem('auth_token');
+  goBack();
+}
+
+// ── Reserve View ──
+function rvInitReserveView() {
+  if (!rvState.user) return;
+  document.getElementById('rvUserName').textContent = rvState.user.name;
+  rvState.selectedTableId = null;
+  rvState.selectedSlot = null;
+  rvState.slotsData = null;
+  rvState.tablesData = [];
+
+  const sel = document.getElementById('rvSelRestaurant');
+  sel.innerHTML = '<option value="">Select a restaurant</option>';
+  state.restaurants.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.name;
+    sel.appendChild(opt);
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('rvSelDate').value = today;
+  document.getElementById('rvSelDate').min = today;
+  document.getElementById('rvSlotsSection').style.display = 'none';
+  document.getElementById('rvTablesSection').style.display = 'none';
+
+  rvSwitchTab('new');
+}
+
+function rvSwitchTab(tab) {
+  document.querySelectorAll('.rv-tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (tab === 'new' && i === 0) || (tab === 'my' && i === 1));
+  });
+  document.getElementById('rvPanelNew').classList.toggle('rv-hidden', tab !== 'new');
+  document.getElementById('rvPanelMy').classList.toggle('rv-hidden', tab !== 'my');
+  rvClearMsg('rvMsgReserve');
+  if (tab === 'my') rvLoadMyReservations();
+}
+
+async function rvOnRestaurantChange() {
+  rvState.selectedTableId = null;
+  rvState.selectedSlot = null;
+  document.getElementById('rvTablesSection').style.display = 'none';
+  const rid = document.getElementById('rvSelRestaurant').value;
+  if (!rid) { document.getElementById('rvSlotsSection').style.display = 'none'; return; }
+  await rvLoadSlots();
+}
+
+async function rvOnDateChange() {
+  rvState.selectedSlot = null;
+  rvState.selectedTableId = null;
+  document.getElementById('rvTablesSection').style.display = 'none';
+  const rid = document.getElementById('rvSelRestaurant').value;
+  if (rid) await rvLoadSlots();
+}
+
+function rvOnPartyChange() {
+  if (rvState.selectedSlot) rvRenderTables();
+}
+
+async function rvLoadSlots() {
+  const rid = document.getElementById('rvSelRestaurant').value;
+  const dateVal = document.getElementById('rvSelDate').value;
+  if (!rid || !dateVal) return;
+
+  try {
+    const res = await fetch(`/api/reservations/slots?restaurant_id=${rid}&date=${dateVal}`);
+    const data = await res.json();
+    rvState.slotsData = data;
+    rvState.selectedSlot = null;
+    rvState.selectedTableId = null;
+    document.getElementById('rvTablesSection').style.display = 'none';
+
+    const grid = document.getElementById('rvSlotGrid');
+    document.getElementById('rvSlotsSection').style.display = 'block';
+
+    if (data.slots.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:16px;">No time slots available</div>';
+      return;
+    }
+
+    // Also load tables for this restaurant so we can count availability
+    const tRes = await fetch('/api/tables?restaurant_id=' + rid);
+    rvState.tablesData = await tRes.json();
+    const totalTables = rvState.tablesData.length;
+
+    grid.innerHTML = '';
+    data.slots.forEach(slot => {
+      const bookedCount = (data.booked[slot] || []).length;
+      const available = totalTables - bookedCount;
+      const nextHour = parseInt(slot.split(':')[0]) + 1;
+      const label = `${slot} – ${nextHour < 24 ? nextHour.toString().padStart(2, '0') : '00'}:00`;
+
+      const chip = document.createElement('div');
+      chip.className = 'rv-slot-chip';
+      if (available <= 0) chip.classList.add('full');
+      chip.innerHTML = `<div>${label}</div><div class="slot-avail">${available > 0 ? available + ' table' + (available > 1 ? 's' : '') : 'Full'}</div>`;
+      chip.onclick = () => {
+        if (available <= 0) return;
+        rvState.selectedSlot = slot;
+        grid.querySelectorAll('.rv-slot-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        rvState.selectedTableId = null;
+        rvRenderTables();
+      };
+      grid.appendChild(chip);
+    });
+  } catch { /* ignore */ }
+}
+
+function rvRenderTables() {
+  if (!rvState.selectedSlot || !rvState.slotsData) return;
+  const bookedIds = rvState.slotsData.booked[rvState.selectedSlot] || [];
+  const partySize = parseInt(document.getElementById('rvSelParty').value) || 2;
+  const grid = document.getElementById('rvTableGrid');
+  grid.innerHTML = '';
+  document.getElementById('rvTablesSection').style.display = 'block';
+
+  if (rvState.tablesData.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:16px;">No tables</div>';
+    return;
+  }
+  rvState.tablesData.forEach(t => {
+    const isBooked = bookedIds.includes(t.id);
+    const tooSmall = t.capacity < partySize;
+    const chip = document.createElement('div');
+    chip.className = 'rv-table-chip';
+    if (isBooked || tooSmall) chip.classList.add('unavailable');
+    if (t.id === rvState.selectedTableId) chip.classList.add('selected');
+    const statusText = isBooked ? 'Booked' : `Seats ${t.capacity}`;
+    chip.innerHTML = `<div class="t-num">Table ${t.table_number}</div><div class="t-cap">${statusText}</div>`;
+    chip.onclick = () => {
+      if (isBooked || tooSmall) return;
+      rvState.selectedTableId = t.id;
+      grid.querySelectorAll('.rv-table-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    };
+    grid.appendChild(chip);
+  });
+}
+
+async function rvCreateReservation() {
+  rvClearMsg('rvMsgReserve');
+  const restaurantId = document.getElementById('rvSelRestaurant').value;
+  const dateVal = document.getElementById('rvSelDate').value;
+  const partySize = parseInt(document.getElementById('rvSelParty').value);
+  const notes = document.getElementById('rvSelNotes').value.trim();
+
+  if (!restaurantId) { rvShowMsg('rvMsgReserve', 'Please select a restaurant', 'error'); return; }
+  if (!dateVal) { rvShowMsg('rvMsgReserve', 'Please select a date', 'error'); return; }
+  if (!rvState.selectedSlot) { rvShowMsg('rvMsgReserve', 'Please select a time slot', 'error'); return; }
+  if (!rvState.selectedTableId) { rvShowMsg('rvMsgReserve', 'Please select a table', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/reservations', {
+      method: 'POST',
+      headers: rvAuthHeaders(),
+      body: JSON.stringify({
+        restaurant_id: restaurantId,
+        table_id: rvState.selectedTableId,
+        reservation_date: dateVal,
+        reservation_time: rvState.selectedSlot + ':00',
+        party_size: partySize,
+        notes: notes || null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to create reservation');
+    rvShowMsg('rvMsgReserve', 'Reservation created!', 'success');
+    rvState.selectedTableId = null;
+    rvState.selectedSlot = null;
+    document.getElementById('rvSelNotes').value = '';
+    rvSwitchTab('my');
+  } catch (e) { rvShowMsg('rvMsgReserve', e.message, 'error'); }
+}
+
+async function rvLoadMyReservations() {
+  const container = document.getElementById('rvReservationsList');
+  container.innerHTML = '<div class="rv-empty">Loading...</div>';
+  try {
+    const res = await fetch('/api/reservations', { headers: rvAuthHeaders() });
+    const data = await res.json();
+    if (data.length === 0) { container.innerHTML = '<div class="rv-empty">No reservations yet</div>'; return; }
+    container.innerHTML = data.map(rvRenderCard).join('');
+  } catch { container.innerHTML = '<div class="rv-empty">Failed to load</div>'; }
+}
+
+function rvRenderCard(r) {
+  const d = new Date(r.reservation_date + 'T00:00:00');
+  const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const timeStr = r.reservation_time.slice(0, 5);
+  const canCancel = r.status === 'pending' || r.status === 'confirmed';
+  return `
+    <div class="rv-card">
+      <div class="rv-card-header">
+        <h3>${r.restaurant_name || 'Restaurant'}</h3>
+        <span class="rv-status-badge rv-status-${r.status}">${r.status}</span>
+      </div>
+      <div class="rv-card-details">
+        <div>Date: <strong>${dateStr}</strong></div>
+        <div>Time: <strong>${timeStr}</strong></div>
+        <div>Table: <strong>${r.table_number || '-'}</strong></div>
+        <div>Party: <strong>${r.party_size}</strong></div>
+      </div>
+      ${r.notes ? `<div style="font-size:0.84rem;color:var(--text-muted);margin-bottom:10px;">${r.notes}</div>` : ''}
+      <div class="rv-card-actions">
+        <button class="rv-btn-sm" onclick="rvToggleQR('${r.id}')">QR Code</button>
+        ${canCancel ? `<button class="rv-btn-sm danger" onclick="rvCancelRes('${r.id}')">Cancel</button>` : ''}
+      </div>
+      <div class="rv-qr-container" id="rvQR-${r.id}" style="display:none"></div>
+    </div>`;
+}
+
+function rvToggleQR(id) {
+  const el = document.getElementById('rvQR-' + id);
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.innerHTML = `<img src="/api/reservations/${id}/qr?token=${encodeURIComponent(rvState.token)}&t=${Date.now()}" alt="QR Code" />`;
+  el.style.display = 'block';
+}
+
+async function rvCancelRes(id) {
+  if (!confirm('Cancel this reservation?')) return;
+  try {
+    const res = await fetch('/api/reservations/' + id + '/cancel', { method: 'PATCH', headers: rvAuthHeaders() });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+    rvShowMsg('rvMsgReserve', 'Reservation cancelled', 'success');
+    rvLoadMyReservations();
+  } catch (e) { rvShowMsg('rvMsgReserve', e.message, 'error'); }
+}
 
 init();
 </script>

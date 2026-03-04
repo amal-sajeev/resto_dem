@@ -14,10 +14,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
+from passlib.context import CryptContext
 from sqlalchemy import select
 
 from app.database import async_session_maker
-from app.models import MenuItem, MenuItemOption, Restaurant, Room
+from app.encryption import encrypt, phone_hash
+from app.models import MenuItem, MenuItemOption, Restaurant, Room, Table, User, UserRole
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Unsplash CDN URLs (w=600 for consistent size). All free to use.
 IMAGES = {
@@ -457,8 +461,56 @@ async def seed() -> None:
             for label, delta in [("Red", "0"), ("White", "0")]:
                 session.add(MenuItemOption(menu_item_id=house_wine_r7.id, label=label, price_delta=Decimal(delta)))
 
+        # ── Seed tables for each restaurant ──
+        table_counts = [10, 8, 6, 8, 10, 8, 6]
+        total_tables = 0
+        for idx, rest in enumerate(restaurants):
+            count = table_counts[idx] if idx < len(table_counts) else 8
+            for t in range(1, count + 1):
+                session.add(Table(
+                    restaurant_id=rest.id,
+                    table_number=str(t),
+                    capacity=2 if t <= 2 else (4 if t <= 6 else 6),
+                ))
+            total_tables += count
+        await session.flush()
+
+        # ── Seed staff accounts ──
+        # Establishment admin
+        admin = User(
+            encrypted_name=encrypt("Admin"),
+            encrypted_email=encrypt("admin@hotel.com"),
+            password_hash=pwd_context.hash("admin123"),
+            role=UserRole.establishment_admin,
+        )
+        session.add(admin)
+
+        # One restaurant admin + one supervisor per restaurant
+        staff_count = 0
+        for idx, rest in enumerate(restaurants):
+            ra = User(
+                encrypted_name=encrypt(f"{rest.name} Manager"),
+                encrypted_email=encrypt(f"manager{idx + 1}@hotel.com"),
+                password_hash=pwd_context.hash("staff123"),
+                role=UserRole.restaurant_admin,
+                restaurant_id=rest.id,
+            )
+            session.add(ra)
+            sv = User(
+                encrypted_name=encrypt(f"{rest.name} Host"),
+                encrypted_email=encrypt(f"host{idx + 1}@hotel.com"),
+                password_hash=pwd_context.hash("staff123"),
+                role=UserRole.supervisor,
+                restaurant_id=rest.id,
+            )
+            session.add(sv)
+            staff_count += 2
+
         await session.commit()
-        print(f"Seed completed: 40 rooms, {len(restaurants)} restaurants, {len(items)} menu items.")
+        print(f"Seed completed: 40 rooms, {len(restaurants)} restaurants, {len(items)} menu items, "
+              f"{total_tables} tables, 1 admin + {staff_count} staff.")
+        print("  Admin login: admin@hotel.com / admin123")
+        print("  Staff login: manager1@hotel.com / staff123 (or host1@hotel.com / staff123)")
 
 
 if __name__ == "__main__":

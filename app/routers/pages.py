@@ -1,5 +1,5 @@
 """
-Serve guest and kitchen HTML pages. Templates live in project_root/templates.
+Serve HTML pages. Templates live in project_root/templates.
 """
 from pathlib import Path
 
@@ -8,7 +8,6 @@ from fastapi.responses import HTMLResponse
 
 router = APIRouter(tags=["pages"])
 
-# From app/routers/pages.py -> app/routers -> app -> project root -> templates
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent.parent / "templates"
 
 
@@ -21,11 +20,29 @@ def _read_html(name: str) -> str:
 
 @router.get("/room/{room_id}", response_class=HTMLResponse)
 async def room_page(room_id: str) -> HTMLResponse:
-    """Guest ordering page for a room. URL is /room/{room_id} so the page can read room from path."""
     return HTMLResponse(_read_html("room.html"))
 
 
 @router.get("/kitchen", response_class=HTMLResponse)
 async def kitchen_page() -> HTMLResponse:
-    """Kitchen display: orders by restaurant, status updates."""
     return HTMLResponse(_read_html("kitchen.html"))
+
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page() -> HTMLResponse:
+    return HTMLResponse(_read_html("login.html"))
+
+
+@router.get("/reserve", response_class=HTMLResponse)
+async def reserve_page() -> HTMLResponse:
+    return HTMLResponse(_read_html("reserve.html"))
+
+
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_page() -> HTMLResponse:
+    return HTMLResponse(_read_html("admin.html"))
+
+
+@router.get("/scanner", response_class=HTMLResponse)
+async def scanner_page() -> HTMLResponse:
+    return HTMLResponse(_read_html("scanner.html"))
