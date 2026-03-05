@@ -1,17 +1,18 @@
 """
 Authentication router: phone OTP for normal users, email+password for staff.
+Establishment-scoped for staff login.
 """
 
 import random
 import string
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import create_access_token, get_current_user
+from app.auth import create_access_token, get_current_user, get_establishment_id
 from app.config import settings
 from app.database import get_db
 from app.encryption import decrypt, encrypt, phone_hash
@@ -34,6 +35,7 @@ def _user_response(user: User) -> UserResponse:
         phone=decrypt(user.encrypted_phone) if user.encrypted_phone else None,
         email=decrypt(user.encrypted_email) if user.encrypted_email else None,
         role=user.role,
+        establishment_id=user.establishment_id,
         restaurant_id=user.restaurant_id,
         is_active=user.is_active,
         created_at=user.created_at,
@@ -56,10 +58,9 @@ async def request_otp(body: OTPRequest, db: AsyncSession = Depends(get_db)):
     db.add(otp)
     await db.flush()
 
-    # Demo mode: log OTP to console
     print(f"[OTP] Phone {body.phone} -> code {code} (expires {expires.isoformat()})")
 
-    return {"message": "OTP sent", "expires_in_seconds": settings.OTP_EXPIRY_MINUTES * 60}
+    return {"message": "OTP sent", "expires_in_seconds": settings.OTP_EXPIRY_MINUTES * 60, "demo_code": code}
 
 
 @router.post("/otp/verify", response_model=AuthResponse)
@@ -82,7 +83,6 @@ async def verify_otp(body: OTPVerify, db: AsyncSession = Depends(get_db)):
 
     otp.is_used = True
 
-    # Find or create user
     user_result = await db.execute(select(User).where(User.phone_hash == ph))
     user = user_result.scalar_one_or_none()
 
@@ -100,24 +100,56 @@ async def verify_otp(body: OTPVerify, db: AsyncSession = Depends(get_db)):
         user.encrypted_name = encrypt(body.name)
         await db.flush()
 
-    token = create_access_token(user.id, user.role, user.restaurant_id)
+    token = create_access_token(user.id, user.role, user.restaurant_id, user.establishment_id)
     return AuthResponse(access_token=token, user=_user_response(user))
 
 
 @router.post("/login", response_model=AuthResponse)
-async def staff_login(body: StaffLogin, db: AsyncSession = Depends(get_db)):
-    """Email + password login for staff accounts."""
-    # We must scan all users and decrypt email to match – or use a blind index.
-    # For staff (small set), scanning is acceptable. For scale, add email_hash column.
+async def staff_login(body: StaffLogin, request: Request, db: AsyncSession = Depends(get_db)):
+    """Email + password login for staff accounts. Scoped to the current establishment."""
+    est_id = getattr(request.state, "establishment_id", None)
+
+    q = select(User).where(
+        User.role.in_([
+            UserRole.establishment_admin,
+            UserRole.restaurant_admin,
+            UserRole.supervisor,
+        ]),
+        User.is_active == True,  # noqa: E712
+    )
+    if est_id is not None:
+        q = q.where(User.establishment_id == est_id)
+
+    result = await db.execute(q)
+    users = result.scalars().all()
+
+    matched_user = None
+    for u in users:
+        if u.encrypted_email:
+            try:
+                if decrypt(u.encrypted_email) == body.email:
+                    matched_user = u
+                    break
+            except Exception:
+                continue
+
+    if matched_user is None or not matched_user.password_hash:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    if not pwd_context.verify(body.password, matched_user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    token = create_access_token(
+        matched_user.id, matched_user.role, matched_user.restaurant_id, matched_user.establishment_id
+    )
+    return AuthResponse(access_token=token, user=_user_response(matched_user))
+
+
+@router.post("/superadmin-login", response_model=AuthResponse)
+async def superadmin_login(body: StaffLogin, db: AsyncSession = Depends(get_db)):
+    """Login endpoint for superadmins (not scoped to any establishment)."""
     result = await db.execute(
-        select(User).where(
-            User.role.in_([
-                UserRole.establishment_admin,
-                UserRole.restaurant_admin,
-                UserRole.supervisor,
-            ]),
-            User.is_active == True,  # noqa: E712
-        )
+        select(User).where(User.role == UserRole.superadmin, User.is_active == True)  # noqa: E712
     )
     users = result.scalars().all()
 
@@ -137,7 +169,7 @@ async def staff_login(body: StaffLogin, db: AsyncSession = Depends(get_db)):
     if not pwd_context.verify(body.password, matched_user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    token = create_access_token(matched_user.id, matched_user.role, matched_user.restaurant_id)
+    token = create_access_token(matched_user.id, matched_user.role)
     return AuthResponse(access_token=token, user=_user_response(matched_user))
 
 

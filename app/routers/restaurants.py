@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.auth import get_establishment_id
 from app.database import get_db
 from app.models import MenuItem, Restaurant
 from app.schemas import (
@@ -19,17 +20,28 @@ router = APIRouter(prefix="/restaurants", tags=["restaurants"])
 
 
 @router.get("", response_model=list[RestaurantResponse])
-async def list_restaurants(db: AsyncSession = Depends(get_db)) -> list[Restaurant]:
-    result = await db.execute(select(Restaurant).order_by(Restaurant.name))
+async def list_restaurants(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> list[Restaurant]:
+    est_id = get_establishment_id(request)
+    result = await db.execute(
+        select(Restaurant)
+        .where(Restaurant.establishment_id == est_id)
+        .order_by(Restaurant.name)
+    )
     return list(result.scalars().all())
 
 
 @router.post("", response_model=RestaurantResponse)
 async def create_restaurant(
     body: RestaurantCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> Restaurant:
+    est_id = get_establishment_id(request)
     restaurant = Restaurant(
+        establishment_id=est_id,
         name=body.name,
         description=body.description,
         image_url=body.image_url,
@@ -44,9 +56,14 @@ async def create_restaurant(
 
 @router.get("/{restaurant_id}", response_model=RestaurantResponse)
 async def get_restaurant(
-    restaurant_id: UUID, db: AsyncSession = Depends(get_db)
+    restaurant_id: UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
 ) -> Restaurant:
-    result = await db.execute(select(Restaurant).where(Restaurant.id == restaurant_id))
+    est_id = get_establishment_id(request)
+    result = await db.execute(
+        select(Restaurant).where(Restaurant.id == restaurant_id, Restaurant.establishment_id == est_id)
+    )
     restaurant = result.scalar_one_or_none()
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
@@ -57,9 +74,13 @@ async def get_restaurant(
 async def update_restaurant(
     restaurant_id: UUID,
     body: RestaurantUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> Restaurant:
-    result = await db.execute(select(Restaurant).where(Restaurant.id == restaurant_id))
+    est_id = get_establishment_id(request)
+    result = await db.execute(
+        select(Restaurant).where(Restaurant.id == restaurant_id, Restaurant.establishment_id == est_id)
+    )
     restaurant = result.scalar_one_or_none()
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
@@ -73,8 +94,16 @@ async def update_restaurant(
 
 @router.get("/{restaurant_id}/menu", response_model=list[MenuItemResponse])
 async def get_restaurant_menu(
-    restaurant_id: UUID, db: AsyncSession = Depends(get_db)
+    restaurant_id: UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
 ) -> list[MenuItem]:
+    est_id = get_establishment_id(request)
+    rest_check = await db.execute(
+        select(Restaurant).where(Restaurant.id == restaurant_id, Restaurant.establishment_id == est_id)
+    )
+    if rest_check.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
     result = await db.execute(
         select(MenuItem)
         .where(MenuItem.restaurant_id == restaurant_id)
@@ -88,9 +117,13 @@ async def get_restaurant_menu(
 async def create_restaurant_menu_item(
     restaurant_id: UUID,
     body: MenuItemCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> MenuItem:
-    r = await db.execute(select(Restaurant).where(Restaurant.id == restaurant_id))
+    est_id = get_establishment_id(request)
+    r = await db.execute(
+        select(Restaurant).where(Restaurant.id == restaurant_id, Restaurant.establishment_id == est_id)
+    )
     restaurant = r.scalar_one_or_none()
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")

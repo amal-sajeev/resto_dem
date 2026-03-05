@@ -1468,6 +1468,10 @@
      PICKER SCREEN
 ═══════════════════════════════════════ -->
 <div id="pickerScreen">
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;">
+    <img class="est-logo" src="" alt="" style="display:none;height:32px;width:auto;border-radius:6px;">
+    <span class="est-name" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:0.15em;text-transform:uppercase;color:var(--txt-light);"></span>
+  </div>
   <div class="picker-title">Kitchen <span>Display</span></div>
   <p class="picker-sub">Select your station</p>
   <div class="picker-grid" id="pickerGrid">
@@ -1635,6 +1639,72 @@
 </div>
 
 <script>
+// ─── Kitchen Theme Presets ──────────────────────────────────────────────────
+const KDS_THEMES = {
+  'kds-classic': {
+    '--bg':'#111210','--rail':'#1a1c18','--rail-b':'#252720','--bar':'#0e0f0c',
+    '--card-bg':'#fafaf8','--card-b':'#e8e8e2',
+    '--txt-dark':'#1a1c18','--txt-mid':'#6e6e66','--txt-light':'#999990',
+    '--s-new':'#d42b2b','--s-new-lt':'#ff4444','--s-prep':'#d47a00','--s-prep-lt':'#f5a623',
+    '--s-ready':'#1a8c3a','--s-ready-lt':'#22c45a','--s-served':'#555550',
+    '--bump':'#22c45a','--cooking':'#f5a623','--recall':'#d42b2b','--info':'#3a8fd4'
+  },
+  'kds-bright': {
+    '--bg':'#f0f1f3','--rail':'#e2e4e8','--rail-b':'#d5d8de','--bar':'#ffffff',
+    '--card-bg':'#ffffff','--card-b':'#d0d3da',
+    '--txt-dark':'#1a1d24','--txt-mid':'#555a65','--txt-light':'#8a8f9a',
+    '--s-new':'#d42b2b','--s-new-lt':'#ff4444','--s-prep':'#c06a00','--s-prep-lt':'#e89520',
+    '--s-ready':'#15803d','--s-ready-lt':'#22c45a','--s-served':'#888890',
+    '--bump':'#15803d','--cooking':'#c06a00','--recall':'#d42b2b','--info':'#2563eb'
+  },
+  'kds-midnight': {
+    '--bg':'#06080c','--rail':'#0c1018','--rail-b':'#141a28','--bar':'#040608',
+    '--card-bg':'#141a28','--card-b':'#1e2840',
+    '--txt-dark':'#dde4f0','--txt-mid':'#7888a8','--txt-light':'#4a5878',
+    '--s-new':'#ff4060','--s-new-lt':'#ff6080','--s-prep':'#ff9020','--s-prep-lt':'#ffb050',
+    '--s-ready':'#00e070','--s-ready-lt':'#40ff90','--s-served':'#3a4a68',
+    '--bump':'#00e070','--cooking':'#ff9020','--recall':'#ff4060','--info':'#40a0ff'
+  },
+  'kds-paper': {
+    '--bg':'#f5f0e8','--rail':'#ebe5da','--rail-b':'#dfd8cc','--bar':'#faf6f0',
+    '--card-bg':'#ffffff','--card-b':'#d8d0c4',
+    '--txt-dark':'#2a2418','--txt-mid':'#6a6050','--txt-light':'#9a9080',
+    '--s-new':'#c03020','--s-new-lt':'#e04838','--s-prep':'#b06800','--s-prep-lt':'#d08a20',
+    '--s-ready':'#1a7a3a','--s-ready-lt':'#2a9a50','--s-served':'#8a8478',
+    '--bump':'#1a7a3a','--cooking':'#b06800','--recall':'#c03020','--info':'#2a6ac0'
+  }
+};
+
+let EST_K = { name: 'Kitchen Display', logo_url: null, kitchen_theme: 'kds-classic', custom_kitchen_colors: null };
+
+function applyKitchenTheme(themeId, customColors) {
+  const root = document.documentElement;
+  if (themeId === 'custom' && customColors) {
+    const mapping = {bg:'--bg',rail:'--rail',card_bg:'--card-bg',card_border:'--card-b',
+      text_dark:'--txt-dark',text_mid:'--txt-mid',
+      status_new:'--s-new',status_prep:'--s-prep',status_ready:'--s-ready'};
+    for (const [k,v] of Object.entries(customColors)) {
+      if (mapping[k] && v) root.style.setProperty(mapping[k], v);
+    }
+  } else if (KDS_THEMES[themeId]) {
+    for (const [k,v] of Object.entries(KDS_THEMES[themeId])) root.style.setProperty(k, v);
+  }
+}
+
+async function loadBranding() {
+  try {
+    const res = await fetch('/api/branding');
+    if (!res.ok) return;
+    EST_K = await res.json();
+    document.title = EST_K.name + ' — Kitchen Display';
+    applyKitchenTheme(EST_K.kitchen_theme, EST_K.custom_kitchen_colors);
+    document.querySelectorAll('.est-name').forEach(el => el.textContent = EST_K.name);
+    document.querySelectorAll('.est-logo').forEach(el => {
+      if (EST_K.logo_url) { el.src = EST_K.logo_url; el.style.display = ''; }
+    });
+  } catch(e) {}
+}
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 const REFRESH_SEC = 15;
 const RING_C = 81.68; // 2 * π * 13
@@ -2359,7 +2429,7 @@ async function openEditModal(id) {
   renderEditItems();
 
   if (!EditState.menuItems.length || EditState.menuItems[0]?.restaurant_id !== order.restaurant_id) {
-    try {
+    try { 
       const res = await fetch(`/api/menu-items?restaurant_id=${order.restaurant_id}`);
       EditState.menuItems = await res.json();
     } catch (e) {
@@ -2739,7 +2809,7 @@ function releaseKdsFocus() {
 }
 
 // ─── Init ──────────────────────────────────────────────────────────────────────
-loadRestaurants();
+loadBranding().then(() => loadRestaurants());
 </script>
 </body>
 </html>

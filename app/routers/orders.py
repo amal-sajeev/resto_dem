@@ -3,11 +3,12 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.auth import get_establishment_id
 from app.database import get_db
 from app.models import MenuItem, MenuItemOption, Order, OrderItem, OrderItemOption, OrderStatus, Restaurant
 from app.schemas import OrderCreate, OrderItemOptionResponse, OrderItemResponse, OrderListResponse, OrderResponse
@@ -15,11 +16,9 @@ from app.schemas import OrderCreate, OrderItemOptionResponse, OrderItemResponse,
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 IN_PROGRESS_STATUSES = (OrderStatus.received, OrderStatus.preparing, OrderStatus.ready)
-IN_PROGRESS_WINDOW_HOURS = 6
 
 
 def _order_to_response(order: Order) -> OrderResponse:
-    """Build OrderResponse with item options including label and price_delta."""
     items_data = []
     for item in order.items:
         options_data = []
@@ -59,7 +58,6 @@ def _order_to_response(order: Order) -> OrderResponse:
 
 
 def _order_to_list_response(order: Order) -> OrderListResponse:
-    """Build OrderListResponse with item options including label and price_delta."""
     items_data = []
     for item in order.items:
         options_data = []
@@ -106,6 +104,7 @@ def _load_order_with_options(q):
 
 @router.get("", response_model=list[OrderListResponse])
 async def list_orders(
+    request: Request,
     room_id: Optional[str] = Query(None, description="Filter by room"),
     restaurant_id: Optional[UUID] = Query(None, description="Filter by restaurant"),
     status: Optional[OrderStatus] = Query(None, description="Filter by status"),
@@ -114,7 +113,13 @@ async def list_orders(
     to_date: Optional[date] = Query(None, description="Orders until this date (inclusive)"),
     db: AsyncSession = Depends(get_db),
 ) -> list[OrderListResponse]:
-    q = select(Order).order_by(Order.created_at.desc())
+    est_id = get_establishment_id(request)
+    q = (
+        select(Order)
+        .join(Restaurant, Order.restaurant_id == Restaurant.id)
+        .where(Restaurant.establishment_id == est_id)
+        .order_by(Order.created_at.desc())
+    )
     if room_id is not None:
         q = q.where(Order.room_id == room_id)
     if restaurant_id is not None:
@@ -137,10 +142,16 @@ async def list_orders(
 @router.get("/{order_id}", response_model=OrderResponse)
 async def get_order(
     order_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> OrderResponse:
+    est_id = get_establishment_id(request)
     result = await db.execute(
-        _load_order_with_options(select(Order).where(Order.id == order_id))
+        _load_order_with_options(
+            select(Order)
+            .join(Restaurant, Order.restaurant_id == Restaurant.id)
+            .where(Order.id == order_id, Restaurant.establishment_id == est_id)
+        )
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -150,16 +161,18 @@ async def get_order(
 
 @router.post("", response_model=OrderResponse)
 async def create_order(
-    body: OrderCreate, db: AsyncSession = Depends(get_db)
+    body: OrderCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
 ) -> OrderResponse:
-    # Ensure restaurant exists
-    r = await db.execute(select(Restaurant).where(Restaurant.id == body.restaurant_id))
+    est_id = get_establishment_id(request)
+    r = await db.execute(
+        select(Restaurant).where(Restaurant.id == body.restaurant_id, Restaurant.establishment_id == est_id)
+    )
     restaurant = r.scalar_one_or_none()
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
-
-    # Resolve menu items and build order lines
     menu_item_ids = [i.menu_item_id for i in body.items]
     unique_menu_item_ids = set(menu_item_ids)
     result = await db.execute(
@@ -252,10 +265,16 @@ async def create_order(
 @router.patch("/{order_id}/cancel", response_model=OrderResponse)
 async def cancel_order(
     order_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> OrderResponse:
+    est_id = get_establishment_id(request)
     result = await db.execute(
-        _load_order_with_options(select(Order).where(Order.id == order_id))
+        _load_order_with_options(
+            select(Order)
+            .join(Restaurant, Order.restaurant_id == Restaurant.id)
+            .where(Order.id == order_id, Restaurant.establishment_id == est_id)
+        )
     )
     order = result.scalar_one_or_none()
     if not order:

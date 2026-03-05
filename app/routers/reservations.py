@@ -1,5 +1,6 @@
 """
 Reservation router: create, list, confirm (QR), cancel, update status, QR image, slots.
+Establishment-scoped via middleware.
 """
 
 import io
@@ -15,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.auth import get_current_user, get_optional_user, require_role
+from app.auth import get_current_user, get_establishment_id, get_optional_user, require_role
 from app.database import get_db
 from app.encryption import decrypt
 from app.models import Reservation, ReservationStatus, Restaurant, Table, User, UserRole
@@ -50,23 +51,25 @@ def _reservation_response(r: Reservation) -> ReservationResponse:
 
 
 def _generate_slots(open_from: time, open_until: time) -> list[str]:
-    """Generate 1-hour slot labels from opening to closing (last slot starts before close)."""
     start_hour = open_from.hour
     end_hour = open_until.hour
     if open_until.minute > 0:
         end_hour += 1
-    # Cap at 23 so we don't generate hour 24
     end_hour = min(end_hour, 24)
     return [f"{h:02d}:00" for h in range(start_hour, end_hour)]
 
 
 @router.get("/slots", response_model=SlotsResponse)
 async def get_slots(
+    request: Request,
     restaurant_id: UUID = Query(...),
     date_val: date = Query(..., alias="date"),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Restaurant).where(Restaurant.id == restaurant_id))
+    est_id = get_establishment_id(request)
+    result = await db.execute(
+        select(Restaurant).where(Restaurant.id == restaurant_id, Restaurant.establishment_id == est_id)
+    )
     restaurant = result.scalar_one_or_none()
     if restaurant is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Restaurant not found")
@@ -76,7 +79,6 @@ async def get_slots(
 
     slots = _generate_slots(restaurant.open_from, restaurant.open_until)
 
-    # Find all active reservations for this restaurant on this date
     res = await db.execute(
         select(Reservation).where(
             Reservation.restaurant_id == restaurant_id,
@@ -97,10 +99,17 @@ async def get_slots(
 @router.post("", response_model=ReservationResponse, status_code=status.HTTP_201_CREATED)
 async def create_reservation(
     body: ReservationCreate,
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Verify table exists and belongs to the restaurant
+    est_id = get_establishment_id(request)
+    rest_check = await db.execute(
+        select(Restaurant).where(Restaurant.id == body.restaurant_id, Restaurant.establishment_id == est_id)
+    )
+    if rest_check.scalar_one_or_none() is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Restaurant not found")
+
     result = await db.execute(select(Table).where(Table.id == body.table_id, Table.is_active == True))  # noqa: E712
     table = result.scalar_one_or_none()
     if table is None:
@@ -110,7 +119,6 @@ async def create_reservation(
     if body.party_size > table.capacity:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Party size exceeds table capacity")
 
-    # Validate the slot falls within restaurant operating hours
     rest_result = await db.execute(select(Restaurant).where(Restaurant.id == body.restaurant_id))
     restaurant = rest_result.scalar_one_or_none()
     if restaurant and restaurant.open_from and restaurant.open_until:
@@ -122,7 +130,6 @@ async def create_reservation(
                 detail=f"Time slot {slot_str} is outside operating hours ({restaurant.open_from.strftime('%H:%M')}–{restaurant.open_until.strftime('%H:%M')})",
             )
 
-    # Exact slot conflict: same table + date + hour
     existing = await db.execute(
         select(Reservation).where(
             Reservation.table_id == body.table_id,
@@ -160,16 +167,23 @@ async def create_reservation(
 
 @router.get("", response_model=list[ReservationResponse])
 async def list_reservations(
+    request: Request,
     restaurant_id: Optional[UUID] = Query(None),
     reservation_date: Optional[date] = Query(None),
     status_filter: Optional[ReservationStatus] = Query(None, alias="status"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    q = select(Reservation).options(
-        selectinload(Reservation.user),
-        selectinload(Reservation.restaurant),
-        selectinload(Reservation.table),
+    est_id = get_establishment_id(request)
+    q = (
+        select(Reservation)
+        .join(Restaurant, Reservation.restaurant_id == Restaurant.id)
+        .where(Restaurant.establishment_id == est_id)
+        .options(
+            selectinload(Reservation.user),
+            selectinload(Reservation.restaurant),
+            selectinload(Reservation.table),
+        )
     )
 
     if user.role == UserRole.normal_user:
@@ -290,7 +304,6 @@ async def get_reservation_qr(
     user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Browsers can't send Authorization headers on <img src>, so accept token as query param
     if user is None and token:
         from jose import JWTError, jwt as jose_jwt
         from app.config import settings as _settings

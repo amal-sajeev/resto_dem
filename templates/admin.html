@@ -233,7 +233,10 @@
 <body>
 <div class="app">
   <div class="top-bar">
-    <h1>Dashboard</h1>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <img class="est-logo" src="" alt="" style="display:none;height:24px;width:auto;border-radius:4px;">
+      <h1>Dashboard</h1>
+    </div>
     <div class="top-bar-right">
       <span class="user-name" id="user-name"></span>
       <button class="btn-logout" onclick="logout()">Sign Out</button>
@@ -244,6 +247,7 @@
     <button class="tab-btn active" onclick="switchTab('reservations')">Reservations</button>
     <button class="tab-btn" onclick="switchTab('tables')">Tables</button>
     <button class="tab-btn" id="tab-staff-btn" onclick="switchTab('staff')">Staff</button>
+    <button class="tab-btn" id="tab-branding-btn" onclick="switchTab('branding')">Branding</button>
   </div>
 
   <div id="msg" class="message"></div>
@@ -331,9 +335,85 @@
     </div>
     <div id="staff-table"></div>
   </div>
+
+  <!-- Branding Panel (establishment admin only) -->
+  <div id="panel-branding" class="panel">
+    <div class="card-form">
+      <h3 class="section-title">Establishment Branding</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Establishment Name</label>
+          <input type="text" id="brand-name" placeholder="Your Hotel Name" />
+        </div>
+        <div class="form-group">
+          <label>Logo URL</label>
+          <input type="url" id="brand-logo" placeholder="https://example.com/logo.png" />
+        </div>
+      </div>
+
+      <h3 class="section-title" style="margin-top:24px">Room / Guest Theme</h3>
+      <div id="room-theme-cards" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;"></div>
+
+      <div id="custom-room-colors" style="display:none;">
+        <div class="form-row-3">
+          <div class="form-group"><label>Background</label><input type="color" id="rc-bg" value="#080705"></div>
+          <div class="form-group"><label>Card</label><input type="color" id="rc-card" value="#1a1713"></div>
+          <div class="form-group"><label>Border</label><input type="color" id="rc-border" value="#302a23"></div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group"><label>Accent</label><input type="color" id="rc-accent" value="#c9a96e"></div>
+          <div class="form-group"><label>Text</label><input type="color" id="rc-text" value="#f0ebe3"></div>
+          <div class="form-group"><label>Muted Text</label><input type="color" id="rc-muted" value="#9d9184"></div>
+        </div>
+      </div>
+
+      <h3 class="section-title" style="margin-top:24px">Kitchen Display Theme</h3>
+      <div id="kitchen-theme-cards" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;"></div>
+
+      <div id="custom-kitchen-colors" style="display:none;">
+        <div class="form-row-3">
+          <div class="form-group"><label>Background</label><input type="color" id="kc-bg" value="#111210"></div>
+          <div class="form-group"><label>Rail</label><input type="color" id="kc-rail" value="#1a1c18"></div>
+          <div class="form-group"><label>Card BG</label><input type="color" id="kc-card" value="#fafaf8"></div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group"><label>Text</label><input type="color" id="kc-text" value="#1a1c18"></div>
+          <div class="form-group"><label>New Status</label><input type="color" id="kc-new" value="#d42b2b"></div>
+          <div class="form-group"><label>Ready Status</label><input type="color" id="kc-ready" value="#1a8c3a"></div>
+        </div>
+      </div>
+
+      <button class="btn-primary" style="margin-top:20px" onclick="saveBranding()">Save Branding</button>
+    </div>
+  </div>
 </div>
 
 <script>
+const ROOM_THEMES = {
+  'noir-gold':{'--bg':'#080705','--bg2':'#110f0c','--card':'#1a1713','--card2':'#221e19','--border':'#302a23','--gold':'#c9a96e','--gold-lt':'#e8c98a','--gold-dim':'#7a6340','--text':'#f0ebe3','--text-muted':'#9d9184','--text-dim':'#4a443d','--danger':'#c0614a','--success':'#6aab7e'},
+  'ivory-elegance':{'--bg':'#f7f5f0','--bg2':'#edeae3','--card':'#ffffff','--card2':'#f5f2ec','--border':'#d9d4cb','--gold':'#9a7b4f','--gold-lt':'#b8965e','--gold-dim':'#6e5a3a','--text':'#2a2520','--text-muted':'#6b6358','--text-dim':'#a39b90','--danger':'#c0614a','--success':'#4a8c5e'},
+  'midnight-blue':{'--bg':'#0a0e1a','--bg2':'#101624','--card':'#161d30','--card2':'#1c243a','--border':'#2a3350','--gold':'#7baaf0','--gold-lt':'#a0c4ff','--gold-dim':'#4a6a9a','--text':'#e4e8f0','--text-muted':'#8892a8','--text-dim':'#3d4660','--danger':'#e06060','--success':'#5cb87a'},
+  'clean-minimal':{'--bg':'#ffffff','--bg2':'#f4f5f7','--card':'#ffffff','--card2':'#f0f1f3','--border':'#e0e2e6','--gold':'#3a7bd5','--gold-lt':'#5a9bf0','--gold-dim':'#2a5a9a','--text':'#1a1d24','--text-muted':'#6b7280','--text-dim':'#a0a6b0','--danger':'#dc4444','--success':'#22a855'},
+  'emerald-dark':{'--bg':'#060d0a','--bg2':'#0c1610','--card':'#132018','--card2':'#1a2a20','--border':'#2a3e30','--gold':'#7ac490','--gold-lt':'#a0dab0','--gold-dim':'#4a7a58','--text':'#e5f0ea','--text-muted':'#8aaa98','--text-dim':'#3a5a48','--danger':'#d06050','--success':'#5cc878'}
+};
+let brandingData = null;
+async function loadBrandingTheme() {
+  try {
+    const res = await fetch('/api/branding');
+    if (!res.ok) return;
+    brandingData = await res.json();
+    document.title = brandingData.name + ' — Dashboard';
+    document.querySelectorAll('.est-logo').forEach(el => { if (brandingData.logo_url) { el.src = brandingData.logo_url; el.style.display = ''; }});
+    const root = document.documentElement;
+    if (brandingData.room_theme === 'custom' && brandingData.custom_room_colors) {
+      const m = {bg:'--bg',bg2:'--bg2',card:'--card',card2:'--card2',border:'--border',accent:'--gold',accent_light:'--gold-lt',accent_dim:'--gold-dim',text:'--text',text_muted:'--text-muted'};
+      for (const [k,v] of Object.entries(brandingData.custom_room_colors)) { if (m[k]&&v) root.style.setProperty(m[k],v); }
+    } else if (ROOM_THEMES[brandingData.room_theme]) {
+      for (const [k,v] of Object.entries(ROOM_THEMES[brandingData.room_theme])) root.style.setProperty(k,v);
+    }
+  } catch(e) {}
+}
+
 const API = '/api';
 let token = localStorage.getItem('auth_token');
 let user = null;
@@ -364,6 +444,7 @@ function switchTab(tab) {
   if (tab === 'reservations') loadReservations();
   else if (tab === 'tables') loadTables();
   else if (tab === 'staff') loadStaff();
+  else if (tab === 'branding') initBrandingPanel();
 }
 
 async function init() {
@@ -375,14 +456,15 @@ async function init() {
     document.getElementById('user-name').textContent = user.name + ' (' + user.role.replace('_', ' ') + ')';
   } catch { logout(); return; }
 
-  // Only establishment_admin can manage staff
   if (user.role !== 'establishment_admin') {
     document.getElementById('tab-staff-btn').classList.add('hidden');
+    document.getElementById('tab-branding-btn').classList.add('hidden');
   }
 
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('res-filter-date').value = today;
 
+  await loadBrandingTheme();
   await loadRestaurants();
   loadReservations();
 }
@@ -606,6 +688,129 @@ async function toggleStaff(id, active) {
     });
     if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
     loadStaff();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+// ─── Branding Panel ──────────────────────────────────────────────────────────
+const ROOM_THEME_LIST = [
+  {id:'noir-gold',name:'Noir & Gold',desc:'Dark warm brown with gold accents',bg:'#080705',fg:'#c9a96e'},
+  {id:'ivory-elegance',name:'Ivory Elegance',desc:'Cream and white with gold',bg:'#f7f5f0',fg:'#9a7b4f'},
+  {id:'midnight-blue',name:'Midnight Blue',desc:'Deep navy with ice-blue',bg:'#0a0e1a',fg:'#7baaf0'},
+  {id:'clean-minimal',name:'Clean Minimal',desc:'White with subtle blue',bg:'#ffffff',fg:'#3a7bd5'},
+  {id:'emerald-dark',name:'Emerald Dark',desc:'Forest green with cream',bg:'#060d0a',fg:'#7ac490'},
+  {id:'custom',name:'Custom',desc:'Set your own colors',bg:'#333',fg:'#fff'}
+];
+const KDS_THEME_LIST = [
+  {id:'kds-classic',name:'KDS Classic',desc:'Dark charcoal, green status',bg:'#111210',fg:'#22c45a'},
+  {id:'kds-bright',name:'KDS Bright',desc:'Light gray, bold colors',bg:'#f0f1f3',fg:'#15803d'},
+  {id:'kds-midnight',name:'KDS Midnight',desc:'Near-black, neon status',bg:'#06080c',fg:'#00e070'},
+  {id:'kds-paper',name:'KDS Paper',desc:'Warm off-white, subtle',bg:'#f5f0e8',fg:'#1a7a3a'},
+  {id:'custom',name:'Custom',desc:'Set your own colors',bg:'#333',fg:'#fff'}
+];
+let selectedRoomTheme = 'noir-gold';
+let selectedKitchenTheme = 'kds-classic';
+
+function renderThemeCards(list, containerId, selected, onSelect) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = list.map(t => `
+    <div onclick="${onSelect}('${t.id}')" style="cursor:pointer;width:120px;padding:12px 10px;border-radius:var(--radius);border:2px solid ${t.id===selected?'var(--gold)':'var(--border)'};background:var(--card2);text-align:center;">
+      <div style="width:40px;height:40px;border-radius:8px;margin:0 auto 8px;background:${t.bg};border:1px solid ${t.fg};display:flex;align-items:center;justify-content:center;">
+        <span style="color:${t.fg};font-weight:700;font-size:12px;">Aa</span>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--text);">${t.name}</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${t.desc}</div>
+    </div>
+  `).join('');
+}
+
+function selectRoomTheme(id) {
+  selectedRoomTheme = id;
+  renderThemeCards(ROOM_THEME_LIST, 'room-theme-cards', id, 'selectRoomTheme');
+  document.getElementById('custom-room-colors').style.display = id === 'custom' ? 'block' : 'none';
+}
+function selectKitchenTheme(id) {
+  selectedKitchenTheme = id;
+  renderThemeCards(KDS_THEME_LIST, 'kitchen-theme-cards', id, 'selectKitchenTheme');
+  document.getElementById('custom-kitchen-colors').style.display = id === 'custom' ? 'block' : 'none';
+}
+
+function initBrandingPanel() {
+  if (brandingData) {
+    document.getElementById('brand-name').value = brandingData.name || '';
+    document.getElementById('brand-logo').value = brandingData.logo_url || '';
+    selectedRoomTheme = brandingData.room_theme || 'noir-gold';
+    selectedKitchenTheme = brandingData.kitchen_theme || 'kds-classic';
+    if (brandingData.custom_room_colors) {
+      const c = brandingData.custom_room_colors;
+      if (c.bg) document.getElementById('rc-bg').value = c.bg;
+      if (c.card) document.getElementById('rc-card').value = c.card;
+      if (c.border) document.getElementById('rc-border').value = c.border;
+      if (c.accent) document.getElementById('rc-accent').value = c.accent;
+      if (c.text) document.getElementById('rc-text').value = c.text;
+      if (c.text_muted) document.getElementById('rc-muted').value = c.text_muted;
+    }
+    if (brandingData.custom_kitchen_colors) {
+      const c = brandingData.custom_kitchen_colors;
+      if (c.bg) document.getElementById('kc-bg').value = c.bg;
+      if (c.rail) document.getElementById('kc-rail').value = c.rail;
+      if (c.card_bg) document.getElementById('kc-card').value = c.card_bg;
+      if (c.text_dark) document.getElementById('kc-text').value = c.text_dark;
+      if (c.status_new) document.getElementById('kc-new').value = c.status_new;
+      if (c.status_ready) document.getElementById('kc-ready').value = c.status_ready;
+    }
+  }
+  renderThemeCards(ROOM_THEME_LIST, 'room-theme-cards', selectedRoomTheme, 'selectRoomTheme');
+  renderThemeCards(KDS_THEME_LIST, 'kitchen-theme-cards', selectedKitchenTheme, 'selectKitchenTheme');
+  document.getElementById('custom-room-colors').style.display = selectedRoomTheme === 'custom' ? 'block' : 'none';
+  document.getElementById('custom-kitchen-colors').style.display = selectedKitchenTheme === 'custom' ? 'block' : 'none';
+}
+
+async function saveBranding() {
+  const body = {
+    name: document.getElementById('brand-name').value || undefined,
+    logo_url: document.getElementById('brand-logo').value || undefined,
+    room_theme: selectedRoomTheme,
+    kitchen_theme: selectedKitchenTheme,
+  };
+  if (selectedRoomTheme === 'custom') {
+    body.custom_room_colors = {
+      bg: document.getElementById('rc-bg').value,
+      bg2: document.getElementById('rc-bg').value,
+      card: document.getElementById('rc-card').value,
+      card2: document.getElementById('rc-card').value,
+      border: document.getElementById('rc-border').value,
+      accent: document.getElementById('rc-accent').value,
+      accent_light: document.getElementById('rc-accent').value,
+      accent_dim: document.getElementById('rc-accent').value,
+      text: document.getElementById('rc-text').value,
+      text_muted: document.getElementById('rc-muted').value,
+    };
+  }
+  if (selectedKitchenTheme === 'custom') {
+    body.custom_kitchen_colors = {
+      bg: document.getElementById('kc-bg').value,
+      rail: document.getElementById('kc-rail').value,
+      card_bg: document.getElementById('kc-card').value,
+      card_border: document.getElementById('kc-card').value,
+      text_dark: document.getElementById('kc-text').value,
+      text_mid: document.getElementById('kc-text').value,
+      status_new: document.getElementById('kc-new').value,
+      status_prep: document.getElementById('kc-new').value,
+      status_ready: document.getElementById('kc-ready').value,
+    };
+  }
+  try {
+    const res = await fetch(API + '/branding', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+    brandingData = await res.json();
+    showMsg('Branding saved successfully', 'success');
+    await loadBrandingTheme();
   } catch (e) {
     showMsg(e.message, 'error');
   }

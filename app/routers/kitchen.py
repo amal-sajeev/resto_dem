@@ -1,12 +1,13 @@
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.auth import get_establishment_id
 from app.database import get_db
-from app.models import MenuItem, MenuItemOption, Order, OrderItem, OrderItemOption, OrderStatus
+from app.models import MenuItem, MenuItemOption, Order, OrderItem, OrderItemOption, OrderStatus, Restaurant
 from app.schemas import (
     KitchenOrderEdit,
     OrderItemOptionResponse,
@@ -20,7 +21,6 @@ router = APIRouter(prefix="/kitchen", tags=["kitchen"])
 
 
 def _order_to_list_response(order: Order) -> OrderListResponse:
-    """Build OrderListResponse with item options (label, price_delta) for kitchen display."""
     items_data = []
     for item in order.items:
         options_data = []
@@ -67,9 +67,16 @@ def _load_order_with_options(q):
 
 @router.get("/orders", response_model=list[OrderListResponse])
 async def list_kitchen_orders(
+    request: Request,
     restaurant_id: UUID = Query(..., description="Filter by restaurant"),
     db: AsyncSession = Depends(get_db),
 ) -> list[OrderListResponse]:
+    est_id = get_establishment_id(request)
+    rest_check = await db.execute(
+        select(Restaurant).where(Restaurant.id == restaurant_id, Restaurant.establishment_id == est_id)
+    )
+    if rest_check.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found in this establishment")
     q = (
         select(Order)
         .where(Order.restaurant_id == restaurant_id)
@@ -86,10 +93,16 @@ async def list_kitchen_orders(
 async def update_order_status(
     order_id: UUID,
     body: OrderStatusUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> OrderListResponse:
+    est_id = get_establishment_id(request)
     result = await db.execute(
-        _load_order_with_options(select(Order).where(Order.id == order_id))
+        _load_order_with_options(
+            select(Order)
+            .join(Restaurant, Order.restaurant_id == Restaurant.id)
+            .where(Order.id == order_id, Restaurant.establishment_id == est_id)
+        )
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -108,10 +121,16 @@ async def update_order_status(
 async def edit_order(
     order_id: UUID,
     body: KitchenOrderEdit,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> OrderListResponse:
+    est_id = get_establishment_id(request)
     result = await db.execute(
-        _load_order_with_options(select(Order).where(Order.id == order_id))
+        _load_order_with_options(
+            select(Order)
+            .join(Restaurant, Order.restaurant_id == Restaurant.id)
+            .where(Order.id == order_id, Restaurant.establishment_id == est_id)
+        )
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -124,14 +143,12 @@ async def edit_order(
 
     existing_items = {item.id: item for item in order.items}
 
-    # --- Removals ---
     for item_id in body.items_to_remove:
         item = existing_items.get(item_id)
         if item:
             await db.delete(item)
             del existing_items[item_id]
 
-    # --- Updates ---
     for upd in body.items_to_update:
         item = existing_items.get(upd.item_id)
         if not item:
@@ -141,7 +158,6 @@ async def edit_order(
         if upd.notes is not None:
             item.notes = upd.notes if upd.notes else None
 
-    # --- Additions ---
     for add in body.items_to_add:
         mi_result = await db.execute(
             select(MenuItem).where(
@@ -179,11 +195,9 @@ async def edit_order(
                     menu_item_option_id=opt.id,
                 ))
 
-    # --- Update order-level notes ---
     if body.notes is not None:
         order.notes = body.notes if body.notes else None
 
-    # --- Recalculate subtotal ---
     await db.flush()
     refresh_result = await db.execute(
         _load_order_with_options(select(Order).where(Order.id == order_id))

@@ -3,7 +3,7 @@ Serve HTML pages. Templates live in project_root/templates.
 """
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 router = APIRouter(tags=["pages"])
@@ -46,3 +46,8 @@ async def admin_page() -> HTMLResponse:
 @router.get("/scanner", response_class=HTMLResponse)
 async def scanner_page() -> HTMLResponse:
     return HTMLResponse(_read_html("scanner.html"))
+
+
+@router.get("/superadmin", response_class=HTMLResponse)
+async def superadmin_page(request: Request) -> HTMLResponse:
+    return HTMLResponse(_read_html("superadmin.html"))

@@ -12,7 +12,7 @@ Pass --clear to delete all existing orders before seeding:
 import asyncio
 import random
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from decimal import Decimal
 from pathlib import Path
@@ -86,7 +86,7 @@ def _random_created_at_recent() -> datetime:
     """Random created_at between 2:00 PM and 2:40 PM on 3 Mar 2026 (IST); stored as naive UTC."""
     delta_seconds = random.randint(0, 40 * 60)  # 0 to 40 minutes
     created_ist = ORDER_TIME_START + timedelta(seconds=delta_seconds)
-    created_utc = created_ist.astimezone(UTC).replace(tzinfo=None)
+    created_utc = created_ist.astimezone(timezone.utc).replace(tzinfo=None)
     return created_utc
 
 

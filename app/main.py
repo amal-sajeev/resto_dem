@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 
-from app.routers import admin, auth, kitchen, menu_items, orders, pages, reservations, restaurants, rooms, tables
+from app.middleware import EstablishmentMiddleware
+from app.routers import admin, auth, branding, kitchen, menu_items, orders, pages, reservations, restaurants, rooms, superadmin, tables
 
 app = FastAPI(
-    title="Hotel Multi-Restaurant Ordering API",
-    description="Backend for QR-based in-room ordering from multiple hotel restaurants.",
-    version="0.1.0",
+    title="White-Label Multi-Restaurant Ordering API",
+    description="Multi-tenant backend for QR-based in-room ordering. Each establishment runs on its own subdomain.",
+    version="0.2.0",
 )
+
+app.add_middleware(EstablishmentMiddleware)
 
 app.include_router(restaurants.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
@@ -17,23 +20,18 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(tables.router, prefix="/api")
 app.include_router(reservations.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(branding.router, prefix="/api")
+app.include_router(superadmin.router, prefix="/api")
 
-# HTML pages
 app.include_router(pages.router)
 
 
 @app.get("/")
 async def root() -> dict:
     return {
-        "message": "Hotel ordering API",
+        "message": "White-label ordering API",
         "docs": "/docs",
         "openapi": "/openapi.json",
-        "guest": "/room/101",
-        "kitchen": "/kitchen",
-        "login": "/login",
-        "reserve": "/reserve",
-        "admin": "/admin",
-        "scanner": "/scanner",
     }
 
 

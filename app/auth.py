@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -21,7 +21,12 @@ _bearer = HTTPBearer(auto_error=False)
 ALGORITHM = "HS256"
 
 
-def create_access_token(user_id: UUID, role: UserRole, restaurant_id: Optional[UUID] = None) -> str:
+def create_access_token(
+    user_id: UUID,
+    role: UserRole,
+    restaurant_id: Optional[UUID] = None,
+    establishment_id: Optional[UUID] = None,
+) -> str:
     expire = datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRY_MINUTES)
     payload = {
         "sub": str(user_id),
@@ -30,6 +35,8 @@ def create_access_token(user_id: UUID, role: UserRole, restaurant_id: Optional[U
     }
     if restaurant_id:
         payload["rid"] = str(restaurant_id)
+    if establishment_id:
+        payload["eid"] = str(establishment_id)
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -75,10 +82,34 @@ async def get_optional_user(
     return user
 
 
+async def get_current_superadmin(
+    user: User = Depends(get_current_user),
+) -> User:
+    """Dependency that ensures the current user is a superadmin."""
+    if user.role != UserRole.superadmin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Superadmin access required")
+    return user
+
+
 def require_role(*roles: UserRole):
-    """Dependency factory: ensures the current user has one of the given roles."""
+    """Dependency factory: ensures the current user has one of the given roles.
+    Superadmins are always allowed."""
     async def _check(user: User = Depends(get_current_user)) -> User:
+        if user.role == UserRole.superadmin:
+            return user
         if user.role not in roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return user
     return _check
+
+
+def get_establishment_id(request: Request) -> UUID:
+    """Extract establishment_id from the request state (set by middleware).
+    Raises 400 if not resolved."""
+    eid = getattr(request.state, "establishment_id", None)
+    if eid is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Establishment context required (use a valid subdomain or X-Establishment-Slug header)",
+        )
+    return eid

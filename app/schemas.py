@@ -8,6 +8,57 @@ from pydantic import BaseModel, Field, model_validator
 from app.models import OrderStatus, PaymentMethod, ReservationStatus, UserRole
 
 
+# ----- Establishment -----
+class EstablishmentCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    slug: str = Field(..., min_length=1, max_length=128, pattern=r"^[a-z0-9][a-z0-9\-]*[a-z0-9]$")
+
+
+class EstablishmentUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    slug: Optional[str] = Field(None, min_length=1, max_length=128, pattern=r"^[a-z0-9][a-z0-9\-]*[a-z0-9]$")
+    is_active: Optional[bool] = None
+
+
+class EstablishmentResponse(BaseModel):
+    id: UUID
+    name: str
+    slug: str
+    logo_url: Optional[str] = None
+    room_theme: str
+    kitchen_theme: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class EstablishmentStats(BaseModel):
+    total_establishments: int
+    active_establishments: int
+    total_orders: int
+    total_restaurants: int
+
+
+# ----- Branding -----
+class BrandingResponse(BaseModel):
+    name: str
+    logo_url: Optional[str] = None
+    room_theme: str
+    kitchen_theme: str
+    custom_room_colors: Optional[dict] = None
+    custom_kitchen_colors: Optional[dict] = None
+
+
+class BrandingUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    logo_url: Optional[str] = Field(None, max_length=512)
+    room_theme: Optional[str] = Field(None, max_length=64)
+    kitchen_theme: Optional[str] = Field(None, max_length=64)
+    custom_room_colors: Optional[dict] = None
+    custom_kitchen_colors: Optional[dict] = None
+
+
 # ----- Restaurant -----
 class RestaurantBase(BaseModel):
     name: str
@@ -212,6 +263,7 @@ class UserResponse(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     role: UserRole
+    establishment_id: Optional[UUID] = None
     restaurant_id: Optional[UUID] = None
     is_active: bool
     created_at: datetime
@@ -308,8 +360,16 @@ class StaffResponse(BaseModel):
     name: str
     email: Optional[str] = None
     role: UserRole
+    establishment_id: Optional[UUID] = None
     restaurant_id: Optional[UUID] = None
     is_active: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ----- Superadmin: seed admin for establishment -----
+class SeedAdminCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128)
+    email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=6)

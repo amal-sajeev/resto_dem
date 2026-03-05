@@ -19,7 +19,7 @@ from sqlalchemy import select
 
 from app.database import async_session_maker
 from app.encryption import encrypt, phone_hash
-from app.models import MenuItem, MenuItemOption, Restaurant, Room, Table, User, UserRole
+from app.models import Establishment, MenuItem, MenuItemOption, Restaurant, Room, Table, User, UserRole
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -98,15 +98,36 @@ async def seed() -> None:
             print("Data already present. Delete existing data first (e.g. drop tables and run init_db) to re-seed.")
             return
 
+        # Create default establishment
+        establishment = Establishment(
+            name="Grand Hotel",
+            slug="grand-hotel",
+        )
+        session.add(establishment)
+        await session.flush()
+
+        # Create superadmin (not tied to any establishment)
+        superadmin = User(
+            encrypted_name=encrypt("Platform Admin"),
+            encrypted_email=encrypt("super@platform.com"),
+            password_hash=pwd_context.hash("super123"),
+            role=UserRole.superadmin,
+        )
+        session.add(superadmin)
+        await session.flush()
+
+        est_id = establishment.id
+
         # Seed rooms (101-110, 201-210, 301-310, 401-410)
         for floor in (1, 2, 3, 4):
             for n in range(1, 11):
-                room_num = f"{floor}{n:02d}"  # 101..110, 201..210, 301..310, 401..410
-                session.add(Room(room_number=room_num, display_name=f"Room {room_num}"))
+                room_num = f"{floor}{n:02d}"
+                session.add(Room(establishment_id=est_id, room_number=room_num, display_name=f"Room {room_num}"))
         await session.flush()
 
         restaurants = [
             Restaurant(
+                establishment_id=est_id,
                 name="Main Restaurant",
                 description="All-day dining with international cuisine. From hearty breakfasts to refined dinners, our main restaurant offers a wide selection of dishes in an elegant setting.",
                 image_url=IMAGES["restaurant_main"],
@@ -114,6 +135,7 @@ async def seed() -> None:
                 open_until=time(22, 0),
             ),
             Restaurant(
+                establishment_id=est_id,
                 name="Sushi Bar",
                 description="Fresh sushi and authentic Japanese cuisine. Our chefs prepare nigiri, maki, and sashimi daily with the finest ingredients.",
                 image_url=IMAGES["restaurant_sushi"],
@@ -121,6 +143,7 @@ async def seed() -> None:
                 open_until=time(22, 0),
             ),
             Restaurant(
+                establishment_id=est_id,
                 name="Pool Grill",
                 description="Light bites and refreshing drinks by the pool. Perfect for a casual lunch or sunset cocktails.",
                 image_url=IMAGES["restaurant_pool"],
@@ -128,6 +151,7 @@ async def seed() -> None:
                 open_until=time(18, 0),
             ),
             Restaurant(
+                establishment_id=est_id,
                 name="Rooftop Lounge",
                 description="Stunning views and a sophisticated menu. Small plates, premium cocktails, and live music on select evenings.",
                 image_url=IMAGES["restaurant_rooftop"],
@@ -135,6 +159,7 @@ async def seed() -> None:
                 open_until=time(23, 30),
             ),
             Restaurant(
+                establishment_id=est_id,
                 name="Breakfast & Co",
                 description="Start your day right. Full breakfast buffet, à la carte eggs, pastries, and specialty coffee until 11:00.",
                 image_url=IMAGES["restaurant_breakfast"],
@@ -142,6 +167,7 @@ async def seed() -> None:
                 open_until=time(11, 0),
             ),
             Restaurant(
+                establishment_id=est_id,
                 name="The Steakhouse",
                 description="Prime cuts, dry-aged beef, and classic sides. A destination for meat lovers with an extensive wine list.",
                 image_url=IMAGES["restaurant_steak"],
@@ -149,6 +175,7 @@ async def seed() -> None:
                 open_until=time(22, 30),
             ),
             Restaurant(
+                establishment_id=est_id,
                 name="Lobby Bar",
                 description="All-day snacks and drinks in the heart of the hotel. Quick bites, coffee, and cocktails in a relaxed atmosphere.",
                 image_url=IMAGES["restaurant_lobby"],
@@ -478,6 +505,7 @@ async def seed() -> None:
         # ── Seed staff accounts ──
         # Establishment admin
         admin = User(
+            establishment_id=est_id,
             encrypted_name=encrypt("Admin"),
             encrypted_email=encrypt("admin@hotel.com"),
             password_hash=pwd_context.hash("admin123"),
@@ -489,6 +517,7 @@ async def seed() -> None:
         staff_count = 0
         for idx, rest in enumerate(restaurants):
             ra = User(
+                establishment_id=est_id,
                 encrypted_name=encrypt(f"{rest.name} Manager"),
                 encrypted_email=encrypt(f"manager{idx + 1}@hotel.com"),
                 password_hash=pwd_context.hash("staff123"),
@@ -497,6 +526,7 @@ async def seed() -> None:
             )
             session.add(ra)
             sv = User(
+                establishment_id=est_id,
                 encrypted_name=encrypt(f"{rest.name} Host"),
                 encrypted_email=encrypt(f"host{idx + 1}@hotel.com"),
                 password_hash=pwd_context.hash("staff123"),
@@ -507,10 +537,12 @@ async def seed() -> None:
             staff_count += 2
 
         await session.commit()
-        print(f"Seed completed: 40 rooms, {len(restaurants)} restaurants, {len(items)} menu items, "
-              f"{total_tables} tables, 1 admin + {staff_count} staff.")
+        print(f"Seed completed: 1 establishment (slug=grand-hotel), 40 rooms, {len(restaurants)} restaurants, "
+              f"{len(items)} menu items, {total_tables} tables, 1 superadmin + 1 admin + {staff_count} staff.")
+        print("  Superadmin: super@platform.com / super123")
         print("  Admin login: admin@hotel.com / admin123")
         print("  Staff login: manager1@hotel.com / staff123 (or host1@hotel.com / staff123)")
+        print(f"  Use header X-Establishment-Slug: grand-hotel for local dev")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "change-me-in-production"
     JWT_EXPIRY_MINUTES: int = 1440
     OTP_EXPIRY_MINUTES: int = 5
+    BASE_DOMAIN: str = "localhost"
+    SUPERADMIN_SUBDOMAIN: str = "manage"
 
     @model_validator(mode="after")
     def ensure_async_driver(self) -> "Settings":

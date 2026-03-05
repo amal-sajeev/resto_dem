@@ -14,14 +14,21 @@ from app.database import engine
 from app.models import Base
 
 
-async def create_tables() -> None:
+async def create_tables(drop_existing: bool = False) -> None:
     async with engine.begin() as conn:
+        if drop_existing:
+            await conn.run_sync(Base.metadata.drop_all)
+            print("Existing tables dropped.")
         await conn.run_sync(Base.metadata.create_all)
     print("Tables created.")
 
 
 async def main() -> None:
-    await create_tables()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--drop", action="store_true", help="Drop all existing tables first")
+    args = parser.parse_args()
+    await create_tables(drop_existing=args.drop)
 
 
 if __name__ == "__main__":

@@ -4,9 +4,9 @@ from decimal import Decimal
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text, Time
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, JSON, Numeric, String, Text, Time, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class PaymentMethod(str, enum.Enum):
@@ -23,6 +23,7 @@ class OrderStatus(str, enum.Enum):
 
 
 class UserRole(str, enum.Enum):
+    superadmin = "superadmin"
     normal_user = "normal_user"
     establishment_admin = "establishment_admin"
     restaurant_admin = "restaurant_admin"
@@ -37,9 +38,6 @@ class ReservationStatus(str, enum.Enum):
     no_show = "no_show"
 
 
-from sqlalchemy.orm import DeclarativeBase
-
-
 def utc_now() -> datetime:
     return datetime.utcnow()
 
@@ -48,16 +46,39 @@ class Base(DeclarativeBase):
     pass
 
 
+class Establishment(Base):
+    __tablename__ = "establishments"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    logo_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    room_theme: Mapped[str] = mapped_column(String(64), nullable=False, default="noir-gold")
+    kitchen_theme: Mapped[str] = mapped_column(String(64), nullable=False, default="kds-classic")
+    custom_room_colors: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    custom_kitchen_colors: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=utc_now)
+
+    restaurants: Mapped[list["Restaurant"]] = relationship("Restaurant", back_populates="establishment")
+    rooms: Mapped[list["Room"]] = relationship("Room", back_populates="establishment")
+    users: Mapped[list["User"]] = relationship("User", back_populates="establishment")
+
+
 class Restaurant(Base):
     __tablename__ = "restaurants"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    establishment_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("establishments.id", ondelete="CASCADE"), nullable=False
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     image_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     open_from: Mapped[Optional[time]] = mapped_column(Time, nullable=True)
     open_until: Mapped[Optional[time]] = mapped_column(Time, nullable=True)
 
+    establishment: Mapped["Establishment"] = relationship("Establishment", back_populates="restaurants")
     menu_items: Mapped[list["MenuItem"]] = relationship("MenuItem", back_populates="restaurant")
     orders: Mapped[list["Order"]] = relationship("Order", back_populates="restaurant")
     tables: Mapped[list["Table"]] = relationship("Table", back_populates="restaurant")
@@ -129,10 +150,18 @@ class Order(Base):
 
 class Room(Base):
     __tablename__ = "rooms"
+    __table_args__ = (
+        UniqueConstraint("establishment_id", "room_number", name="uq_room_establishment"),
+    )
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    room_number: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
+    establishment_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("establishments.id", ondelete="CASCADE"), nullable=False
+    )
+    room_number: Mapped[str] = mapped_column(String(32), nullable=False)
     display_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+
+    establishment: Mapped["Establishment"] = relationship("Establishment", back_populates="rooms")
 
 
 class OrderItem(Base):
@@ -178,6 +207,9 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    establishment_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("establishments.id", ondelete="CASCADE"), nullable=True
+    )
     encrypted_name: Mapped[str] = mapped_column(Text, nullable=False)
     encrypted_phone: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     phone_hash: Mapped[Optional[str]] = mapped_column(String(64), unique=True, nullable=True)
@@ -190,6 +222,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=utc_now)
 
+    establishment: Mapped[Optional["Establishment"]] = relationship("Establishment", back_populates="users")
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user")
 
 

@@ -322,7 +322,10 @@
 <body>
 <div class="app">
   <div class="top-bar">
-    <h1>Reservations</h1>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <img class="est-logo" src="" alt="" style="display:none;height:24px;width:auto;border-radius:4px;">
+      <h1>Reservations</h1>
+    </div>
     <div class="user-info">
       <span class="user-name" id="user-name"></span>
       <button class="btn-logout" onclick="logout()">Sign Out</button>
@@ -381,6 +384,30 @@
 </div>
 
 <script>
+const ROOM_THEMES = {
+  'noir-gold':{'--bg':'#080705','--bg2':'#110f0c','--card':'#1a1713','--card2':'#221e19','--border':'#302a23','--gold':'#c9a96e','--gold-lt':'#e8c98a','--gold-dim':'#7a6340','--text':'#f0ebe3','--text-muted':'#9d9184','--text-dim':'#4a443d','--danger':'#c0614a','--success':'#6aab7e'},
+  'ivory-elegance':{'--bg':'#f7f5f0','--bg2':'#edeae3','--card':'#ffffff','--card2':'#f5f2ec','--border':'#d9d4cb','--gold':'#9a7b4f','--gold-lt':'#b8965e','--gold-dim':'#6e5a3a','--text':'#2a2520','--text-muted':'#6b6358','--text-dim':'#a39b90','--danger':'#c0614a','--success':'#4a8c5e'},
+  'midnight-blue':{'--bg':'#0a0e1a','--bg2':'#101624','--card':'#161d30','--card2':'#1c243a','--border':'#2a3350','--gold':'#7baaf0','--gold-lt':'#a0c4ff','--gold-dim':'#4a6a9a','--text':'#e4e8f0','--text-muted':'#8892a8','--text-dim':'#3d4660','--danger':'#e06060','--success':'#5cb87a'},
+  'clean-minimal':{'--bg':'#ffffff','--bg2':'#f4f5f7','--card':'#ffffff','--card2':'#f0f1f3','--border':'#e0e2e6','--gold':'#3a7bd5','--gold-lt':'#5a9bf0','--gold-dim':'#2a5a9a','--text':'#1a1d24','--text-muted':'#6b7280','--text-dim':'#a0a6b0','--danger':'#dc4444','--success':'#22a855'},
+  'emerald-dark':{'--bg':'#060d0a','--bg2':'#0c1610','--card':'#132018','--card2':'#1a2a20','--border':'#2a3e30','--gold':'#7ac490','--gold-lt':'#a0dab0','--gold-dim':'#4a7a58','--text':'#e5f0ea','--text-muted':'#8aaa98','--text-dim':'#3a5a48','--danger':'#d06050','--success':'#5cc878'}
+};
+(async function loadBranding() {
+  try {
+    const res = await fetch('/api/branding');
+    if (!res.ok) return;
+    const b = await res.json();
+    document.title = b.name + ' — Reservations';
+    document.querySelectorAll('.est-logo').forEach(el => { if (b.logo_url) { el.src = b.logo_url; el.style.display = ''; }});
+    const root = document.documentElement;
+    if (b.room_theme === 'custom' && b.custom_room_colors) {
+      const m = {bg:'--bg',bg2:'--bg2',card:'--card',card2:'--card2',border:'--border',accent:'--gold',accent_light:'--gold-lt',accent_dim:'--gold-dim',text:'--text',text_muted:'--text-muted'};
+      for (const [k,v] of Object.entries(b.custom_room_colors)) { if (m[k]&&v) root.style.setProperty(m[k],v); }
+    } else if (ROOM_THEMES[b.room_theme]) {
+      for (const [k,v] of Object.entries(ROOM_THEMES[b.room_theme])) root.style.setProperty(k,v);
+    }
+  } catch(e) {}
+})();
+
 const API = '/api';
 let token = localStorage.getItem('auth_token');
 let user = null;
