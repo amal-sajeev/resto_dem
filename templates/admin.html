@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080705;
+    --bg2: #110f0c;
+    --card: #1a1713;
+    --card2: #221e19;
+    --border: #302a23;
+    --gold: #c9a96e;
+    --gold-lt: #e8c98a;
+    --gold-dim: #7a6340;
+    --text: #f0ebe3;
+    --text-muted: #9d9184;
+    --text-dim: #4a443d;
+    --danger: #c0614a;
+    --success: #6aab7e;
+    --info: #5b9bd5;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --transition: 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,169,110,0.06) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 24px 20px 100px; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .top-bar h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--gold-lt);
+  }
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .user-name { font-size: 0.85rem; color: var(--text-muted); }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  .tab-bar {
+    display: flex;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 8px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  .tab-btn.active { background: var(--card2); color: var(--gold); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .form-group select, .form-group input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color var(--transition);
+    appearance: none;
+  }
+  .form-group select:focus, .form-group input:focus { border-color: var(--gold-dim); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    border: none;
+    border-radius: var(--radius);
+    padding: 13px 24px;
+    color: var(--bg);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-sm {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-sm:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .btn-sm.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .message.success { display: block; background: rgba(106,171,126,0.12); border: 1px solid rgba(106,171,126,0.3); color: var(--success); }
+  .message.error { display: block; background: rgba(192,97,74,0.12); border: 1px solid rgba(192,97,74,0.3); color: var(--danger); }
+
+  /* Data table */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+  }
+  .data-table th {
+    text-align: left;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 12px;
+    font-size: 0.88rem;
+    border-bottom: 1px solid rgba(48,42,35,0.5);
+    color: var(--text-muted);
+  }
+  .data-table tr:hover td { color: var(--text); }
+
+  .status-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .status-pending { background: rgba(201,169,110,0.15); color: var(--gold); }
+  .status-confirmed { background: rgba(106,171,126,0.15); color: var(--success); }
+  .status-cancelled { background: rgba(192,97,74,0.15); color: var(--danger); }
+  .status-completed { background: rgba(91,155,213,0.15); color: var(--info); }
+  .status-no_show { background: rgba(192,97,74,0.1); color: var(--text-dim); }
+
+  .empty-state { text-align: center; padding: 40px; color: var(--text-dim); font-size: 0.9rem; }
+
+  .card-form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top-bar">
+    <h1>Dashboard</h1>
+    <div class="top-bar-right">
+      <span class="user-name" id="user-name"></span>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('reservations')">Reservations</button>
+    <button class="tab-btn" onclick="switchTab('tables')">Tables</button>
+    <button class="tab-btn" id="tab-staff-btn" onclick="switchTab('staff')">Staff</button>
+  </div>
+
+  <div id="msg" class="message"></div>
+
+  <!-- Reservations Panel -->
+  <div id="panel-reservations" class="panel active">
+    <div class="form-row" style="margin-bottom:20px">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Restaurant</label>
+        <select id="res-filter-rest" onchange="loadReservations()">
+          <option value="">All restaurants</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Date</label>
+        <input type="date" id="res-filter-date" onchange="loadReservations()" />
+      </div>
+    </div>
+    <div id="reservations-table"></div>
+  </div>
+
+  <!-- Tables Panel -->
+  <div id="panel-tables" class="panel">
+    <div class="card-form">
+      <h3 class="section-title">Add Table</h3>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>Restaurant</label>
+          <select id="tbl-restaurant"></select>
+        </div>
+        <div class="form-group">
+          <label>Table Number</label>
+          <input type="text" id="tbl-number" placeholder="e.g. A1" />
+        </div>
+        <div class="form-group">
+          <label>Capacity</label>
+          <input type="number" id="tbl-capacity" min="1" max="50" value="4" />
+        </div>
+      </div>
+      <button class="btn-primary" onclick="createTable()">Add Table</button>
+    </div>
+
+    <div class="form-group">
+      <label>Filter by Restaurant</label>
+      <select id="tbl-filter" onchange="loadTables()"></select>
+    </div>
+    <div id="tables-table"></div>
+  </div>
+
+  <!-- Staff Panel (establishment admin only) -->
+  <div id="panel-staff" class="panel">
+    <div class="card-form">
+      <h3 class="section-title">Add Staff Member</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="staff-name" placeholder="Full name" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="staff-email" placeholder="email@hotel.com" />
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="staff-password" placeholder="Min 6 chars" />
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="staff-role">
+            <option value="restaurant_admin">Restaurant Admin</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="establishment_admin">Establishment Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Restaurant</label>
+          <select id="staff-restaurant">
+            <option value="">None (global)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="createStaff()">Add Staff</button>
+    </div>
+    <div id="staff-table"></div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let token = localStorage.getItem('auth_token');
+let user = null;
+let restaurants = [];
+
+function authHeaders() {
+  return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+}
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'message ' + type;
+}
+function clearMsg() { document.getElementById('msg').className = 'message'; }
+
+function logout() {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
+  window.location.href = '/login';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  clearMsg();
+  if (tab === 'reservations') loadReservations();
+  else if (tab === 'tables') loadTables();
+  else if (tab === 'staff') loadStaff();
+}
+
+async function init() {
+  if (!token) { window.location.href = '/login'; return; }
+  try {
+    const res = await fetch(API + '/auth/me', { headers: authHeaders() });
+    if (!res.ok) { logout(); return; }
+    user = await res.json();
+    document.getElementById('user-name').textContent = user.name + ' (' + user.role.replace('_', ' ') + ')';
+  } catch { logout(); return; }
+
+  // Only establishment_admin can manage staff
+  if (user.role !== 'establishment_admin') {
+    document.getElementById('tab-staff-btn').classList.add('hidden');
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('res-filter-date').value = today;
+
+  await loadRestaurants();
+  loadReservations();
+}
+
+async function loadRestaurants() {
+  const res = await fetch(API + '/restaurants');
+  restaurants = await res.json();
+
+  const selectors = ['res-filter-rest', 'tbl-restaurant', 'tbl-filter', 'staff-restaurant'];
+  selectors.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const hasAllOption = sel.querySelector('option[value=""]');
+    restaurants.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.name;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+/* ── Reservations ── */
+async function loadReservations() {
+  const container = document.getElementById('reservations-table');
+  const rid = document.getElementById('res-filter-rest').value;
+  const dateVal = document.getElementById('res-filter-date').value;
+
+  let url = API + '/reservations?';
+  if (rid) url += 'restaurant_id=' + rid + '&';
+  if (dateVal) url += 'reservation_date=' + dateVal + '&';
+
+  try {
+    const res = await fetch(url, { headers: authHeaders() });
+    const data = await res.json();
+    if (data.length === 0) {
+      container.innerHTML = '<div class="empty-state">No reservations found</div>';
+      return;
+    }
+    let html = `<table class="data-table"><thead><tr>
+      <th>Guest</th><th>Restaurant</th><th>Table</th><th>Date</th><th>Time</th><th>Party</th><th>Status</th><th>Actions</th>
+    </tr></thead><tbody>`;
+    data.forEach(r => {
+      const d = new Date(r.reservation_date + 'T00:00:00');
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const timeStr = r.reservation_time.slice(0, 5);
+      html += `<tr>
+        <td>${r.user_name || '-'}</td>
+        <td>${r.restaurant_name || '-'}</td>
+        <td>${r.table_number || '-'}</td>
+        <td>${dateStr}</td>
+        <td>${timeStr}</td>
+        <td>${r.party_size}</td>
+        <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+        <td>
+          <select onchange="updateResStatus('${r.id}', this.value)" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:0.78rem;font-family:inherit;">
+            <option value="pending" ${r.status==='pending'?'selected':''}>Pending</option>
+            <option value="confirmed" ${r.status==='confirmed'?'selected':''}>Confirmed</option>
+            <option value="completed" ${r.status==='completed'?'selected':''}>Completed</option>
+            <option value="no_show" ${r.status==='no_show'?'selected':''}>No Show</option>
+            <option value="cancelled" ${r.status==='cancelled'?'selected':''}>Cancelled</option>
+          </select>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } catch {
+    container.innerHTML = '<div class="empty-state">Failed to load</div>';
+  }
+}
+
+async function updateResStatus(id, status) {
+  try {
+    const res = await fetch(API + '/reservations/' + id + '/status', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+    showMsg('Status updated', 'success');
+  } catch (e) {
+    showMsg(e.message, 'error');
+    loadReservations();
+  }
+}
+
+/* ── Tables ── */
+async function loadTables() {
+  const container = document.getElementById('tables-table');
+  const rid = document.getElementById('tbl-filter').value;
+  if (!rid) { container.innerHTML = '<div class="empty-state">Select a restaurant</div>'; return; }
+
+  try {
+    const res = await fetch(API + '/tables?restaurant_id=' + rid + '&active_only=false', { headers: authHeaders() });
+    const data = await res.json();
+    if (data.length === 0) {
+      container.innerHTML = '<div class="empty-state">No tables</div>';
+      return;
+    }
+    let html = `<table class="data-table"><thead><tr>
+      <th>Number</th><th>Capacity</th><th>Active</th><th>Actions</th>
+    </tr></thead><tbody>`;
+    data.forEach(t => {
+      html += `<tr>
+        <td>Table ${t.table_number}</td>
+        <td>${t.capacity} seats</td>
+        <td>${t.is_active ? '<span style="color:var(--success)">Yes</span>' : '<span style="color:var(--danger)">No</span>'}</td>
+        <td>
+          <button class="btn-sm" onclick="toggleTable('${t.id}', ${!t.is_active})">${t.is_active ? 'Deactivate' : 'Activate'}</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } catch {
+    container.innerHTML = '<div class="empty-state">Failed to load</div>';
+  }
+}
+
+async function createTable() {
+  clearMsg();
+  const rid = document.getElementById('tbl-restaurant').value;
+  const num = document.getElementById('tbl-number').value.trim();
+  const cap = parseInt(document.getElementById('tbl-capacity').value);
+  if (!rid || !num) { showMsg('Fill in all fields', 'error'); return; }
+  try {
+    const res = await fetch(API + '/tables', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ restaurant_id: rid, table_number: num, capacity: cap }),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+    showMsg('Table added', 'success');
+    document.getElementById('tbl-number').value = '';
+    document.getElementById('tbl-filter').value = rid;
+    loadTables();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+async function toggleTable(id, active) {
+  try {
+    const res = await fetch(API + '/tables/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ is_active: active }),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+    loadTables();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+/* ── Staff ── */
+async function loadStaff() {
+  const container = document.getElementById('staff-table');
+  try {
+    const res = await fetch(API + '/admin/staff', { headers: authHeaders() });
+    if (!res.ok) { container.innerHTML = '<div class="empty-state">Access denied</div>'; return; }
+    const data = await res.json();
+    if (data.length === 0) {
+      container.innerHTML = '<div class="empty-state">No staff members</div>';
+      return;
+    }
+    let html = `<table class="data-table"><thead><tr>
+      <th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Actions</th>
+    </tr></thead><tbody>`;
+    data.forEach(s => {
+      const roleName = s.role.replace(/_/g, ' ');
+      html += `<tr>
+        <td>${s.name}</td>
+        <td>${s.email || '-'}</td>
+        <td style="text-transform:capitalize">${roleName}</td>
+        <td>${s.is_active ? '<span style="color:var(--success)">Yes</span>' : '<span style="color:var(--danger)">No</span>'}</td>
+        <td>
+          <button class="btn-sm danger" onclick="toggleStaff('${s.id}', ${!s.is_active})">${s.is_active ? 'Deactivate' : 'Activate'}</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } catch {
+    container.innerHTML = '<div class="empty-state">Failed to load</div>';
+  }
+}
+
+async function createStaff() {
+  clearMsg();
+  const name = document.getElementById('staff-name').value.trim();
+  const email = document.getElementById('staff-email').value.trim();
+  const password = document.getElementById('staff-password').value;
+  const role = document.getElementById('staff-role').value;
+  const rid = document.getElementById('staff-restaurant').value || null;
+  if (!name || !email || !password) { showMsg('Fill in all fields', 'error'); return; }
+  try {
+    const res = await fetch(API + '/admin/staff', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ name, email, password, role, restaurant_id: rid }),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Failed'); }
+    showMsg('Staff member created', 'success');
+    document.getElementById('staff-name').value = '';
+    document.getElementById('staff-email').value = '';
+    document.getElementById('staff-password').value = '';
+    loadStaff();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+async function toggleStaff(id, active) {
+  try {
+    const res = await fetch(API + '/admin/staff/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ is_active: active }),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+    loadStaff();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+init();
+</script>
+</body>
+</html>

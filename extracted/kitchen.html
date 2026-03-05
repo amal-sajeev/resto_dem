@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kitchen Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0c0f0c;
+    --bg2: #111411;
+    --card: #171b17;
+    --card2: #1e231e;
+    --border: #2a302a;
+    --border2: #3a403a;
+    --green: #5eb86a;
+    --green-dim: #2e5c36;
+    --amber: #d4933a;
+    --amber-dim: #6b4a1c;
+    --blue: #5a8fcc;
+    --blue-dim: #2a4866;
+    --red: #cc5a5a;
+    --red-dim: #5c2a2a;
+    --gold: #c9a96e;
+    --text: #d8e0d8;
+    --text-muted: #7a8c7a;
+    --text-dim: #404840;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --transition: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(94,184,106,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .brand-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .brand-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Restaurant selector */
+  .resto-select {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 9px 14px;
+    cursor: pointer;
+    min-width: 180px;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a8c7a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .resto-select:focus { outline: none; border-color: var(--green); }
+
+  /* Status filter tabs */
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+  }
+  .filter-tab {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .filter-tab.active {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border2);
+  }
+
+  /* Refresh control */
+  .refresh-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .refresh-btn {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 9px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { border-color: var(--green); color: var(--text); }
+  .refresh-icon {
+    transition: transform 0.6s;
+    display: inline-block;
+  }
+  .refresh-btn.spinning .refresh-icon { transform: rotate(360deg); }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .live-label { font-size: 11px; color: var(--text-muted); }
+
+  /* ── Main layout ── */
+  .main {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border2); }
+  .stat-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .stat-card.received .stat-val { color: var(--blue); }
+  .stat-card.preparing .stat-val { color: var(--amber); }
+  .stat-card.ready .stat-val { color: var(--green); }
+  .stat-card.served .stat-val { color: var(--text-muted); }
+
+  /* ── Orders grid ── */
+  .orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  /* Order card */
+  .order-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition), box-shadow var(--transition), border-color 0.2s;
+    animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+  .order-card.status-received { border-top: 2px solid var(--blue); }
+  .order-card.status-preparing { border-top: 2px solid var(--amber); }
+  .order-card.status-ready { border-top: 2px solid var(--green); }
+  .order-card.status-served { border-top: 2px solid var(--text-dim); opacity: 0.6; }
+
+  /* Card header */
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-left {}
+  .order-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .order-room {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .order-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .order-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .chip-party {
+    background: rgba(201,169,110,0.1);
+    border-color: rgba(201,169,110,0.3);
+    color: var(--gold);
+  }
+  .chip-payment-bill {
+    background: rgba(90,143,204,0.1);
+    border-color: rgba(90,143,204,0.3);
+    color: var(--blue);
+  }
+  .chip-payment-cash {
+    background: rgba(94,184,106,0.1);
+    border-color: rgba(94,184,106,0.3);
+    color: var(--green);
+  }
+
+  .card-right { text-align: right; flex-shrink: 0; }
+  .order-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border: 1px solid;
+  }
+  .status-badge.received { background: rgba(90,143,204,0.15); border-color: rgba(90,143,204,0.4); color: var(--blue); }
+  .status-badge.preparing { background: rgba(212,147,58,0.15); border-color: rgba(212,147,58,0.4); color: var(--amber); }
+  .status-badge.ready { background: rgba(94,184,106,0.15); border-color: rgba(94,184,106,0.4); color: var(--green); }
+  .status-badge.served { background: rgba(64,72,64,0.3); border-color: var(--border); color: var(--text-muted); }
+
+  /* Card items */
+  .card-items {
+    padding: 14px 18px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .order-item-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .item-qty {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--amber);
+    min-width: 24px;
+    font-weight: 500;
+  }
+  .item-name {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.4;
+    flex: 1;
+  }
+  .item-price {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .card-notes {
+    margin: 0 18px 14px;
+    padding: 10px 12px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .card-notes-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Card footer */
+  .card-footer {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .order-total {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .action-btns {
+    display: flex;
+    gap: 6px;
+  }
+  .action-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-received {
+    background: rgba(90,143,204,0.1);
+    border-color: rgba(90,143,204,0.4);
+    color: var(--blue);
+  }
+  .btn-received:hover { background: rgba(90,143,204,0.2); }
+  .btn-preparing {
+    background: rgba(212,147,58,0.1);
+    border-color: rgba(212,147,58,0.4);
+    color: var(--amber);
+  }
+  .btn-preparing:hover { background: rgba(212,147,58,0.2); }
+  .btn-ready {
+    background: rgba(94,184,106,0.1);
+    border-color: rgba(94,184,106,0.4);
+    color: var(--green);
+  }
+  .btn-ready:hover { background: rgba(94,184,106,0.2); }
+  .btn-served {
+    background: rgba(64,72,64,0.2);
+    border-color: var(--border);
+    color: var(--text-muted);
+  }
+  .btn-served:hover { background: var(--border); color: var(--text); }
+  .action-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* ── States ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    grid-column: 1 / -1;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+  .empty-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .empty-sub { font-size: 13px; }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 80px 20px;
+    grid-column: 1/-1;
+  }
+
+  .error-banner {
+    background: rgba(204,90,90,0.1);
+    border: 1px solid rgba(204,90,90,0.3);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--red);
+    font-size: 13px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .error-banner.show { display: block; }
+
+  /* ── Notifications ── */
+  .notification-strip {
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .notif {
+    background: var(--card2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    min-width: 240px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  .notif.show { opacity: 1; transform: translateX(0); }
+  .notif-title { font-weight: 500; margin-bottom: 2px; }
+  .notif-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* ── Section dividers for column layout ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .section-count {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Ticker ── */
+  .refresh-timer {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    min-width: 60px;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<div class="notification-strip" id="notifStrip"></div>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">🍳</div>
+    <div>
+      <div class="brand-title">Kitchen Display</div>
+      <div class="brand-sub">Live order management</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <select class="resto-select" id="restoSelect" onchange="onRestoChange()">
+      <option value="">Select restaurant…</option>
+    </select>
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" onclick="setFilter('active')">Active</button>
+      <button class="filter-tab" onclick="setFilter('all')">All</button>
+      <button class="filter-tab" onclick="setFilter('served')">Served</button>
+    </div>
+    <div class="refresh-group">
+      <div class="live-dot"></div>
+      <span class="live-label">Auto-refresh</span>
+      <span class="refresh-timer" id="refreshTimer">—</span>
+      <button class="refresh-btn" id="refreshBtn" onclick="manualRefresh()">
+        <span class="refresh-icon" id="refreshIcon">↻</span>
+        Refresh
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Stats bar -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card received"><span class="stat-val" id="statReceived">—</span><span class="stat-label">Received</span></div>
+    <div class="stat-card preparing"><span class="stat-val" id="statPreparing">—</span><span class="stat-label">Preparing</span></div>
+    <div class="stat-card ready"><span class="stat-val" id="statReady">—</span><span class="stat-label">Ready</span></div>
+    <div class="stat-card served"><span class="stat-val" id="statServed">—</span><span class="stat-label">Served today</span></div>
+  </div>
+
+  <div class="error-banner" id="errorBanner"></div>
+
+  <div class="orders-grid" id="ordersGrid">
+    <div class="empty-state">
+      <div class="empty-icon">🍽</div>
+      <p class="empty-title">Select a restaurant</p>
+      <p class="empty-sub">Choose a restaurant above to see incoming orders.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+const state = {
+  restaurants: [],
+  selectedRestoId: null,
+  orders: [],
+  filter: 'active',
+  refreshInterval: null,
+  countdown: 15,
+  previousOrderIds: new Set(),
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmt = (n) => `€${parseFloat(n).toFixed(2)}`;
+
+const formatTime = (iso) => {
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const timeAgo = (iso) => {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  return `${Math.floor(diff/3600)}h ago`;
+};
+
+const STATUS_ORDER = ['received', 'preparing', 'ready', 'served'];
+const STATUS_NEXT = { received: 'preparing', preparing: 'ready', ready: 'served' };
+const STATUS_LABEL = {
+  received: 'Received',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  served: 'Served',
+};
+const STATUS_NEXT_LABEL = {
+  received: '→ Start preparing',
+  preparing: '→ Mark ready',
+  ready: '→ Mark served',
+};
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+function showNotif(title, sub, color = 'var(--green)') {
+  const strip = document.getElementById('notifStrip');
+  const el = document.createElement('div');
+  el.className = 'notif';
+  el.style.borderColor = color;
+  el.innerHTML = `<div class="notif-title">${title}</div>${sub ? `<div class="notif-sub">${sub}</div>` : ''}`;
+  strip.appendChild(el);
+  requestAnimationFrame(() => { el.classList.add('show'); });
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 400);
+  }, 3500);
+}
+
+// ─── Error banner ─────────────────────────────────────────────────────────────
+function showError(msg) {
+  const b = document.getElementById('errorBanner');
+  b.textContent = msg;
+  b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 5000);
+}
+
+// ─── Load restaurants ─────────────────────────────────────────────────────────
+async function loadRestaurants() {
+  try {
+    const res = await fetch('/api/restaurants');
+    state.restaurants = await res.json();
+    const sel = document.getElementById('restoSelect');
+    sel.innerHTML = '<option value="">Select restaurant…</option>' +
+      state.restaurants.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+  } catch(e) {
+    showError('Failed to load restaurants.');
+  }
+}
+
+// ─── Load orders ──────────────────────────────────────────────────────────────
+async function loadOrders() {
+  if (!state.selectedRestoId) return;
+  try {
+    const res = await fetch(`/api/kitchen/orders?restaurant_id=${state.selectedRestoId}`);
+    if (!res.ok) throw new Error();
+    const orders = await res.json();
+
+    // Check for new orders
+    const newIds = new Set(orders.map(o => o.id));
+    if (state.previousOrderIds.size > 0) {
+      orders.forEach(o => {
+        if (!state.previousOrderIds.has(o.id)) {
+          showNotif(`New order — Room ${o.room_id}`, `${o.items.length} item(s) · Party of ${o.party_size}`, 'var(--blue)');
+        }
+      });
+    }
+    state.previousOrderIds = newIds;
+    state.orders = orders;
+    updateStats();
+    renderOrders();
+  } catch(e) {
+    showError('Failed to refresh orders.');
+  }
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const counts = { received: 0, preparing: 0, ready: 0, served: 0 };
+  state.orders.forEach(o => { if (counts[o.status] !== undefined) counts[o.status]++; });
+  document.getElementById('statReceived').textContent = counts.received;
+  document.getElementById('statPreparing').textContent = counts.preparing;
+  document.getElementById('statReady').textContent = counts.ready;
+  document.getElementById('statServed').textContent = counts.served;
+}
+
+// ─── Filter ───────────────────────────────────────────────────────────────────
+function setFilter(f) {
+  state.filter = f;
+  document.querySelectorAll('.filter-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['active','all','served'][i] === f);
+  });
+  renderOrders();
+}
+
+function filteredOrders() {
+  switch(state.filter) {
+    case 'active':
+      return state.orders.filter(o => ['received','preparing','ready'].includes(o.status));
+    case 'served':
+      return state.orders.filter(o => o.status === 'served');
+    default:
+      return state.orders;
+  }
+}
+
+// ─── Render orders ────────────────────────────────────────────────────────────
+function renderOrders() {
+  const grid = document.getElementById('ordersGrid');
+  const orders = filteredOrders();
+
+  if (!state.selectedRestoId) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🍽</div><p class="empty-title">Select a restaurant</p><p class="empty-sub">Choose a restaurant above to see incoming orders.</p></div>`;
+    return;
+  }
+
+  if (!orders.length) {
+    const labels = { active: 'No active orders', all: 'No orders yet', served: 'No served orders' };
+    const subs = { active: 'New orders will appear here automatically.', all: 'Orders will appear once guests start placing them.', served: 'Served orders will appear here.' };
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">✓</div><p class="empty-title">${labels[state.filter]}</p><p class="empty-sub">${subs[state.filter]}</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = orders.map((order, i) => renderOrderCard(order, i)).join('');
+}
+
+function renderOrderCard(order, i) {
+  const next = STATUS_NEXT[order.status];
+  const btnCls = next ? `action-btn btn-${next}` : 'action-btn btn-served';
+  const shortId = order.id.slice(0, 8).toUpperCase();
+
+  const actionButtons = next
+    ? `<button class="${btnCls}" onclick="updateStatus('${order.id}', '${next}')">${STATUS_NEXT_LABEL[order.status]}</button>`
+    : `<span style="font-size:12px;color:var(--text-dim)">Complete</span>`;
+
+  return `
+    <div class="order-card status-${order.status}" style="animation-delay:${i * 50}ms" id="card-${order.id}">
+      <div class="card-header">
+        <div class="card-left">
+          <div class="order-num">#${shortId}</div>
+          <div class="order-room">Room ${order.room_id}</div>
+          <div class="order-meta">
+            <span class="order-chip chip-party">👥 ${order.party_size}</span>
+            <span class="order-chip ${order.payment_method === 'room_bill' ? 'chip-payment-bill' : 'chip-payment-cash'}">
+              ${order.payment_method === 'room_bill' ? '🏨 Room bill' : '💳 Pay now'}
+            </span>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="order-time">${formatTime(order.created_at)}</div>
+          <span class="status-badge ${order.status}">${STATUS_LABEL[order.status]}</span>
+        </div>
+      </div>
+      <div class="card-items">
+        ${order.items.map(item => `
+          <div class="order-item-row">
+            <span class="item-qty">${item.quantity}×</span>
+            <span class="item-name">${item.name}</span>
+            <span class="item-price">€${(item.unit_price * item.quantity).toFixed(2)}</span>
+          </div>
+        `).join('')}
+      </div>
+      ${order.notes ? `
+        <div class="card-notes">
+          <span class="card-notes-label">Notes</span>
+          ${order.notes}
+        </div>
+      ` : ''}
+      <div class="card-footer">
+        <span class="order-total">${fmt(order.subtotal)}</span>
+        <div class="action-btns">${actionButtons}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Update status ────────────────────────────────────────────────────────────
+async function updateStatus(orderId, newStatus) {
+  const card = document.getElementById(`card-${orderId}`);
+  if (card) card.style.opacity = '0.5';
+
+  try {
+    const res = await fetch(`/api/kitchen/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!res.ok) throw new Error();
+    const order = await res.json();
+    // Update in state
+    const idx = state.orders.findIndex(o => o.id === orderId);
+    if (idx !== -1) state.orders[idx] = order;
+    updateStats();
+    renderOrders();
+    showNotif(
+      `Room ${order.room_id} — ${STATUS_LABEL[newStatus]}`,
+      `Order #${orderId.slice(0,8).toUpperCase()}`,
+      newStatus === 'ready' ? 'var(--green)' : newStatus === 'served' ? 'var(--text-muted)' : 'var(--amber)'
+    );
+  } catch(e) {
+    if (card) card.style.opacity = '1';
+    showError(`Failed to update order status.`);
+  }
+}
+
+// ─── Restaurant change ────────────────────────────────────────────────────────
+function onRestoChange() {
+  const sel = document.getElementById('restoSelect');
+  state.selectedRestoId = sel.value || null;
+  state.orders = [];
+  state.previousOrderIds = new Set();
+  updateStats();
+  if (state.selectedRestoId) {
+    renderOrders();
+    loadOrders();
+    startAutoRefresh();
+  } else {
+    renderOrders();
+    stopAutoRefresh();
+  }
+}
+
+// ─── Manual refresh ───────────────────────────────────────────────────────────
+async function manualRefresh() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.classList.add('spinning');
+  await loadOrders();
+  setTimeout(() => btn.classList.remove('spinning'), 700);
+  state.countdown = 15;
+}
+
+// ─── Auto-refresh ─────────────────────────────────────────────────────────────
+function startAutoRefresh() {
+  stopAutoRefresh();
+  state.countdown = 15;
+  updateTimer();
+  state.refreshInterval = setInterval(() => {
+    state.countdown--;
+    updateTimer();
+    if (state.countdown <= 0) {
+      loadOrders();
+      state.countdown = 15;
+    }
+  }, 1000);
+}
+
+function stopAutoRefresh() {
+  if (state.refreshInterval) clearInterval(state.refreshInterval);
+  state.refreshInterval = null;
+  document.getElementById('refreshTimer').textContent = '—';
+}
+
+function updateTimer() {
+  document.getElementById('refreshTimer').textContent = `${state.countdown}s`;
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────────
+loadRestaurants();
+</script>
+</body>
+</html>

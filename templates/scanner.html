@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reservation Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080705;
+    --bg2: #110f0c;
+    --card: #1a1713;
+    --card2: #221e19;
+    --border: #302a23;
+    --gold: #c9a96e;
+    --gold-lt: #e8c98a;
+    --gold-dim: #7a6340;
+    --text: #f0ebe3;
+    --text-muted: #9d9184;
+    --text-dim: #4a443d;
+    --danger: #c0614a;
+    --success: #6aab7e;
+    --info: #5b9bd5;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --transition: 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,169,110,0.06) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 24px 20px 100px; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .top-bar h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--gold-lt);
+  }
+  .top-bar-right { display: flex; align-items: center; gap: 12px; }
+  .user-name { font-size: 0.85rem; color: var(--text-muted); }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  .scanner-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  #reader {
+    width: 100%;
+    min-height: 300px;
+  }
+  #reader video { border-radius: 0 !important; }
+
+  .scanner-controls {
+    padding: 20px;
+    text-align: center;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px 32px;
+    color: var(--bg);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-secondary {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 32px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-left: 12px;
+  }
+  .btn-secondary:hover { border-color: var(--gold-dim); }
+
+  /* Manual code entry */
+  .manual-entry {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .manual-entry h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .manual-row {
+    display: flex;
+    gap: 10px;
+  }
+  .manual-row input {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.92rem;
+    outline: none;
+  }
+  .manual-row input:focus { border-color: var(--gold-dim); }
+  .manual-row button {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    color: var(--bg);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* Result card */
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .result-card.visible { display: block; }
+  .result-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: var(--gold-lt);
+    margin-bottom: 16px;
+  }
+  .result-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .result-detail {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  .result-detail strong {
+    display: block;
+    color: var(--text);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .result-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .btn-confirm {
+    flex: 1;
+    background: rgba(106,171,126,0.2);
+    border: 1px solid var(--success);
+    border-radius: var(--radius);
+    padding: 13px;
+    color: var(--success);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-confirm:hover { background: rgba(106,171,126,0.3); }
+  .btn-reject {
+    flex: 1;
+    background: rgba(192,97,74,0.15);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    padding: 13px;
+    color: var(--danger);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-reject:hover { background: rgba(192,97,74,0.25); }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .message.success { display: block; background: rgba(106,171,126,0.12); border: 1px solid rgba(106,171,126,0.3); color: var(--success); }
+  .message.error { display: block; background: rgba(192,97,74,0.12); border: 1px solid rgba(192,97,74,0.3); color: var(--danger); }
+  .message.info { display: block; background: rgba(91,155,213,0.12); border: 1px solid rgba(91,155,213,0.3); color: var(--info); }
+
+  .nav-links {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .nav-link {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--transition);
+  }
+  .nav-link:hover { border-color: var(--gold-dim); color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top-bar">
+    <h1>Scanner</h1>
+    <div class="top-bar-right">
+      <span class="user-name" id="user-name"></span>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="nav-links">
+    <a class="nav-link" href="/admin">Dashboard</a>
+  </div>
+
+  <div id="msg" class="message"></div>
+
+  <div class="scanner-box">
+    <div id="reader"></div>
+    <div class="scanner-controls">
+      <button class="btn-primary" id="btn-scan" onclick="startScan()">Start Scanner</button>
+      <button class="btn-secondary" id="btn-stop" onclick="stopScan()" style="display:none">Stop</button>
+    </div>
+  </div>
+
+  <div class="manual-entry">
+    <h3>Manual Confirmation Code</h3>
+    <div class="manual-row">
+      <input type="text" id="manual-code" placeholder="Paste confirmation code" />
+      <button onclick="manualConfirm()">Confirm</button>
+    </div>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <h3 id="result-title">Reservation Details</h3>
+    <div class="result-details" id="result-details"></div>
+    <div class="result-actions" id="result-actions"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+const API = '/api';
+let token = localStorage.getItem('auth_token');
+let user = null;
+let html5QrCode = null;
+let scanning = false;
+
+function authHeaders() {
+  return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+}
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'message ' + type;
+}
+function clearMsg() { document.getElementById('msg').className = 'message'; }
+
+function logout() {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
+  window.location.href = '/login';
+}
+
+async function init() {
+  if (!token) { window.location.href = '/login'; return; }
+  try {
+    const res = await fetch(API + '/auth/me', { headers: authHeaders() });
+    if (!res.ok) { logout(); return; }
+    user = await res.json();
+    document.getElementById('user-name').textContent = user.name;
+  } catch { logout(); return; }
+}
+
+function extractCode(text) {
+  // QR encodes a full URL; extract the confirmation code from the end
+  const match = text.match(/\/confirm\/([A-Za-z0-9_-]+)/);
+  if (match) return match[1];
+  return text.trim();
+}
+
+async function startScan() {
+  if (scanning) return;
+  clearMsg();
+  html5QrCode = new Html5Qrcode("reader");
+  try {
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess,
+      () => {}
+    );
+    scanning = true;
+    document.getElementById('btn-scan').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-block';
+  } catch (err) {
+    showMsg('Camera access denied or unavailable. Use manual entry below.', 'error');
+  }
+}
+
+async function stopScan() {
+  if (html5QrCode && scanning) {
+    await html5QrCode.stop();
+    scanning = false;
+  }
+  document.getElementById('btn-scan').style.display = 'inline-block';
+  document.getElementById('btn-stop').style.display = 'none';
+}
+
+async function onScanSuccess(decodedText) {
+  await stopScan();
+  const code = extractCode(decodedText);
+  showMsg('QR code scanned! Processing...', 'info');
+  await confirmByCode(code);
+}
+
+async function manualConfirm() {
+  clearMsg();
+  const code = document.getElementById('manual-code').value.trim();
+  if (!code) { showMsg('Enter a confirmation code', 'error'); return; }
+  await confirmByCode(extractCode(code));
+}
+
+async function confirmByCode(code) {
+  try {
+    const res = await fetch(API + '/reservations/confirm/' + code, {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Confirmation failed');
+
+    showResult(data);
+    showMsg('Reservation confirmed!', 'success');
+  } catch (e) {
+    showMsg(e.message, 'error');
+    hideResult();
+  }
+}
+
+function showResult(r) {
+  const card = document.getElementById('result-card');
+  const details = document.getElementById('result-details');
+  const actions = document.getElementById('result-actions');
+
+  const d = new Date(r.reservation_date + 'T00:00:00');
+  const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const timeStr = r.reservation_time.slice(0, 5);
+
+  details.innerHTML = `
+    <div class="result-detail">Guest<strong>${r.user_name || '-'}</strong></div>
+    <div class="result-detail">Restaurant<strong>${r.restaurant_name || '-'}</strong></div>
+    <div class="result-detail">Date<strong>${dateStr}</strong></div>
+    <div class="result-detail">Time<strong>${timeStr}</strong></div>
+    <div class="result-detail">Table<strong>${r.table_number || '-'}</strong></div>
+    <div class="result-detail">Party Size<strong>${r.party_size}</strong></div>
+    <div class="result-detail">Status<strong style="text-transform:capitalize">${r.status}</strong></div>
+  `;
+
+  actions.innerHTML = '';
+  if (r.status === 'confirmed') {
+    const btnDone = document.createElement('button');
+    btnDone.className = 'btn-confirm';
+    btnDone.textContent = 'Mark Completed';
+    btnDone.onclick = () => updateStatus(r.id, 'completed');
+    actions.appendChild(btnDone);
+
+    const btnNoShow = document.createElement('button');
+    btnNoShow.className = 'btn-reject';
+    btnNoShow.textContent = 'No Show';
+    btnNoShow.onclick = () => updateStatus(r.id, 'no_show');
+    actions.appendChild(btnNoShow);
+  }
+
+  card.classList.add('visible');
+}
+
+function hideResult() {
+  document.getElementById('result-card').classList.remove('visible');
+}
+
+async function updateStatus(id, status) {
+  try {
+    const res = await fetch(API + '/reservations/' + id + '/status', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Update failed');
+    showResult(data);
+    showMsg('Status updated to ' + status, 'success');
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
