@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin Dashboard</title>
+<title>Royal Dine — Admin</title>
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="manifest" href="/static/site.webmanifest">
+<meta name="theme-color" content="#c9a96e">
+<meta property="og:image" content="/static/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
@@ -233,7 +240,13 @@
 <body>
 <div class="app">
   <div class="top-bar">
-    <h1>Dashboard</h1>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <img src="/static/logo.png" alt="Royal Dine" style="height:56px;width:56px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(201,169,110,0.2));">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:400;color:var(--gold-lt);letter-spacing:0.1em;text-transform:uppercase;line-height:1.1;">Royal Dine</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">Dashboard</div>
+      </div>
+    </div>
     <div class="top-bar-right">
       <span class="user-name" id="user-name"></span>
       <button class="btn-logout" onclick="logout()">Sign Out</button>

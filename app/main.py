@@ -1,12 +1,17 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.routers import admin, auth, kitchen, menu_items, orders, pages, reservations, restaurants, rooms, tables
 
 app = FastAPI(
-    title="Hotel Multi-Restaurant Ordering API",
+    title="Royal Dine API",
     description="Backend for QR-based in-room ordering from multiple hotel restaurants.",
     version="0.1.0",
 )
+
+app.mount("/static", StaticFiles(directory=Path(__file__).resolve().parent.parent / "static"), name="static")
 
 app.include_router(restaurants.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
@@ -25,7 +30,7 @@ app.include_router(pages.router)
 @app.get("/")
 async def root() -> dict:
     return {
-        "message": "Hotel ordering API",
+        "message": "Royal Dine API",
         "docs": "/docs",
         "openapi": "/openapi.json",
         "guest": "/room/101",

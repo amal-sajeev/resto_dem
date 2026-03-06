@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kitchen Display</title>
+<title>Royal Dine — Kitchen</title>
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="manifest" href="/static/site.webmanifest">
+<meta name="theme-color" content="#c9a96e">
+<meta property="og:image" content="/static/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -1468,6 +1475,7 @@
      PICKER SCREEN
 ═══════════════════════════════════════ -->
 <div id="pickerScreen">
+  <img src="/static/logo.png" alt="Royal Dine" style="height:80px;margin:0 auto -20px;display:block;object-fit:contain;">
   <div class="picker-title">Kitchen <span>Display</span></div>
   <p class="picker-sub">Select your station</p>
   <div class="picker-grid" id="pickerGrid">
@@ -1483,6 +1491,7 @@
   <div class="kds-header">
     <div class="kds-header-left">
       <button class="kds-back" onclick="goToPicker()">← BACK</button>
+      <img src="/static/logo.png" alt="Royal Dine" style="height:28px;object-fit:contain;">
       <span class="kds-resto-name" id="kdsRestoName">—</span>
     </div>
     <div class="kds-header-center">
@@ -1531,6 +1540,7 @@
       <div class="kds-grid-wrap" id="paneLive">
         <div class="kds-grid" id="kdsGrid" aria-live="polite">
           <div class="kds-empty">
+            <img src="/static/logo.png" alt="Royal Dine" style="height:48px;object-fit:contain;margin-bottom:12px;opacity:0.5;">
             <div class="spinner"></div>
             <p class="kds-empty-sub">Loading orders…</p>
           </div>
@@ -1539,6 +1549,7 @@
       <div class="kds-grid-wrap" id="paneArchive" style="display:none">
         <div class="kds-grid" id="archiveGrid">
           <div class="kds-empty">
+            <img src="/static/logo.png" alt="Royal Dine" style="height:48px;object-fit:contain;margin-bottom:12px;opacity:0.5;">
             <div class="kds-empty-icon">🗂</div>
             <p class="kds-empty-title">No served orders yet</p>
           </div>
@@ -1589,7 +1600,10 @@
 <div class="edit-overlay" id="editOverlay">
   <div class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
     <div class="edit-modal-hdr">
-      <span class="edit-modal-title" id="editModalTitle">Edit Order</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="/static/logo.png" alt="Royal Dine" style="height:20px;object-fit:contain;">
+        <span class="edit-modal-title" id="editModalTitle">Edit Order</span>
+      </div>
       <button class="edit-modal-close" onclick="closeEditModal()">&times;</button>
     </div>
     <div class="edit-modal-body">
@@ -1623,6 +1637,7 @@
 <div class="recall-overlay" id="recallOverlay" onclick="if(event.target===this)closeRecallModal()">
   <div class="recall-dialog" role="dialog" aria-modal="true" aria-labelledby="recallDialogTitle">
     <div class="recall-dialog-hdr">
+      <img src="/static/logo.png" alt="Royal Dine" style="height:20px;object-fit:contain;">
       <span class="recall-dialog-icon">↩</span>
       <span class="recall-dialog-title" id="recallDialogTitle">Recall Order</span>
     </div>
@@ -1741,7 +1756,7 @@ async function loadRestaurants() {
     if (urlR) selectResto(urlR);
   } catch (e) {
     document.getElementById('pickerGrid').innerHTML =
-      '<p class="picker-loading" style="color:#d42b2b">Failed to load. Is the server running?</p>';
+      '<div style="text-align:center"><img src="/static/logo.png" alt="Royal Dine" style="height:48px;object-fit:contain;margin-bottom:12px;opacity:0.5;"><p class="picker-loading" style="color:#d42b2b">Failed to load. Is the server running?</p></div>';
   }
 }
 
@@ -1901,6 +1916,7 @@ function renderGrid() {
 
   if (!sorted.length) {
     grid.innerHTML = `<div class="kds-empty">
+      <img src="/static/logo.png" alt="Royal Dine" style="height:48px;object-fit:contain;margin-bottom:12px;opacity:0.5;">
       <div class="kds-empty-icon">✓</div>
       <p class="kds-empty-title">All clear</p>
       <p class="kds-empty-sub">Waiting for incoming orders…</p>
@@ -2033,6 +2049,7 @@ function renderArchiveTab() {
 
   if (!count) {
     grid.innerHTML = `<div class="kds-empty">
+      <img src="/static/logo.png" alt="Royal Dine" style="height:48px;object-fit:contain;margin-bottom:12px;opacity:0.5;">
       <div class="kds-empty-icon">🗂</div>
       <p class="kds-empty-title">No served orders yet</p>
     </div>`;
@@ -2200,7 +2217,7 @@ function printBill() {
   if (!o) return;
 
   const resto = S.restaurants.find(r => r.id === S.restoId);
-  const restoName = resto ? resto.name : 'Restaurant';
+  const restoName = resto ? resto.name : 'Royal Dine';
   const ref = o.id.slice(0, 8).toUpperCase();
   const dt = new Date(o.created_at.endsWith('Z') ? o.created_at : o.created_at + 'Z');
   const dateStr = dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -2232,13 +2249,15 @@ function printBill() {
     <div class="bill-close-btn" style="position:fixed;top:16px;right:16px;z-index:100000;">
       <button type="button" onclick="closeBillView()" style="padding:10px 20px;font-size:14px;font-family:inherit;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">Close</button>
     </div>
-    <div style="max-width:400px;margin:0 auto;padding:40px 24px;font-family:'Georgia','Times New Roman',serif;color:#1a1a1a;">
-      <div style="text-align:center;margin-bottom:24px;">
+    <div style="position:relative;max-width:400px;margin:0 auto;padding:40px 24px;font-family:'Georgia','Times New Roman',serif;color:#1a1a1a;">
+      <img src="/static/logo-watermark.png" alt="" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;pointer-events:none;" aria-hidden="true">
+      <div style="position:relative;text-align:center;margin-bottom:24px;">
+        <img src="/static/logo-linework.png" alt="Royal Dine" style="width:80px;margin-bottom:10px;">
         <h1 style="font-size:22px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin:0;">${restoName}</h1>
         <div style="font-size:11px;color:#999;letter-spacing:0.15em;text-transform:uppercase;margin-top:6px;">Bill</div>
       </div>
 
-      <div style="border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:12px 0;margin-bottom:16px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#555;display:flex;flex-wrap:wrap;gap:4px 16px;">
+      <div style="position:relative;border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:12px 0;margin-bottom:16px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#555;display:flex;flex-wrap:wrap;gap:4px 16px;">
         <span><strong>Ref:</strong> #${ref}</span>
         <span><strong>Room:</strong> ${o.room_id}</span>
         <span><strong>Party:</strong> ${o.party_size}</span>
@@ -2271,7 +2290,7 @@ function printBill() {
       ${o.notes ? `<div style="margin-top:12px;padding:10px 12px;background:#f9f7f2;border-radius:6px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#555;"><strong>Notes:</strong> ${o.notes}</div>` : ''}
 
       <div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #eee;">
-        <p style="font-size:14px;font-style:italic;color:#888;margin:0;">Thank you for dining with us</p>
+        <p style="font-size:14px;font-style:italic;color:#888;margin:0;">Thank you for dining with Royal Dine</p>
       </div>
     </div>
   `;
